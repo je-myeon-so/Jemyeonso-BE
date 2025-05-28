@@ -1,4 +1,4 @@
-package com.jemyeonso.app.jemyeonsobe.api.users.entity;
+package com.jemyeonso.app.jemyeonsobe.api.user.entity;
 
 import com.jemyeonso.app.jemyeonsobe.api.auth.entity.Oauth;
 import jakarta.persistence.CascadeType;
@@ -31,7 +31,7 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "email", nullable = false, unique = true, length = 255)
+    @Column(name = "email", unique = true, length = 255)
     private String email;
 
     @Column(name = "name", nullable = false, length = 50)

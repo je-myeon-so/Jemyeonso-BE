@@ -14,7 +14,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import com.jemyeonso.app.jemyeonsobe.api.users.entity.User;
+import com.jemyeonso.app.jemyeonsobe.api.user.entity.User;
 
 @Entity
 @AllArgsConstructor
