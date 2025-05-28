@@ -45,4 +45,11 @@ public class KakaoUserResponseDto {
     public String getProviderId() {
         return String.valueOf(id);
     }
+
+    public String getProfileImageUrl() {
+        if (kakao_account != null && kakao_account.getProfile() != null) {
+            return kakao_account.getProfile().getProfile_image_url();
+        }
+        return null;
+    }
 }
