@@ -40,7 +40,7 @@ public class KakaoOauthClient {
             .retrieve()
             .onStatus(status -> status.isError(), response ->
                 response.bodyToMono(String.class)
-                    .doOnNext(body -> log.info(">>> Kakao 토큰 요청 에러 응답: " + body))
+                    .doOnNext(body -> log.warn(">>> Kakao 토큰 요청 에러 응답: " + body))
                     .map(body -> new RuntimeException("카카오 토큰 요청 실패: " + body))
             )
             .bodyToMono(KakaoTokenResponseDto.class)
@@ -64,8 +64,6 @@ public class KakaoOauthClient {
                 .retrieve()
                 .bodyToMono(String.class)
                 .block();
-
-            log.info(">>>>> Kakao 사용자 연결 끊기 성공: {}", response);
         } catch (Exception e) {
             log.warn(">>>>> Kakao unlink 실패: {}", e.getMessage());
         }

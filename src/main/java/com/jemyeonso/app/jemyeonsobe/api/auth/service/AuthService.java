@@ -24,14 +24,11 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
 
     public void loginWithKakao(String code, HttpServletResponse response) {
-        log.info("loginWithKakao Service 진입");
-
         KakaoUserResponseDto kakaouser;
 
         // Kakao 유저 정보 가져오기
         try {
             kakaouser = kakaoOauthClient.getUserInfo(code);
-            log.info("카카오 유저 정보 가져오기 성공: {}", kakaouser.getEmail());
         } catch (Exception e) {
             log.error("카카오 유저 정보 가져오기 실패", e);
             throw new RuntimeException("카카오 API 호출 실패", e);
@@ -55,7 +52,6 @@ public class AuthService {
         // 기존 사용자 처리
         if (authOpt.isPresent()) {
             User existingUser = authOpt.get().getUser();
-            log.info("기존 사용자 로그인: {}", existingUser.getName());
 
             try {
                 String refreshToken = jwtTokenProvider.createRefreshToken(existingUser);
@@ -64,7 +60,6 @@ public class AuthService {
                 authRepository.updateRefreshToken(existingUser.getId(), refreshToken);
 
                 addTokenCookies(response, accessToken, refreshToken);
-                log.info("기존 사용자 토큰 발급 및 쿠키 추가 완료");
             } catch (Exception e) {
                 log.error("기존 사용자 토큰 발급 실패", e);
                 throw new RuntimeException("토큰 발급 실패", e);
@@ -81,7 +76,6 @@ public class AuthService {
                     .createdAt(LocalDateTime.now())
                     .build();
                 userRepository.save(newUser);
-                log.info("신규 사용자 저장 완료: {}", newUser.getId());
 
                 String refreshToken = jwtTokenProvider.createRefreshToken(newUser);
                 String accessToken = jwtTokenProvider.createAccessToken(newUser);
@@ -93,13 +87,10 @@ public class AuthService {
                     .refreshToken(refreshToken)
                     .build();
                 authRepository.save(newOauth);
-                log.info("신규 Oauth 정보 저장 완료");
 
                 addTokenCookies(response, accessToken, refreshToken);
 
-                log.info("신규 사용자 토큰 발급 및 쿠키 추가 완료");
             } catch (Exception e) {
-                log.error("신규 사용자 등록 또는 토큰 발급 실패", e);
                 throw new RuntimeException("신규 사용자 처리 실패", e);
             }
         }

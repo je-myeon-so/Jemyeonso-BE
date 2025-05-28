@@ -28,7 +28,6 @@ public class AuthController {
     @GetMapping("/kakao/callback")
     public ResponseEntity<?> kakaoCallback(@RequestParam("code") String code,
         HttpServletResponse response) {
-        System.out.println("kakao callback");
         authService.loginWithKakao(code, response);
         ResponseEntity<ApiResponse<Object>> ok = ResponseEntity.ok(
             ApiResponse.success(ApiResponseCode.SUCCESS, "카카오 콜백에 성공하였습니다.", null));
