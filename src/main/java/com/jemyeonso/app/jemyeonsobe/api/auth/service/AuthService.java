@@ -1,7 +1,6 @@
 package com.jemyeonso.app.jemyeonsobe.api.auth.service;
 
 import com.jemyeonso.app.jemyeonsobe.api.auth.dto.KakaoUserResponseDto;
-import com.jemyeonso.app.jemyeonsobe.api.auth.dto.LogoutResponseDto;
 import com.jemyeonso.app.jemyeonsobe.api.auth.entity.Oauth;
 import com.jemyeonso.app.jemyeonsobe.api.auth.repository.AuthRepository;
 import com.jemyeonso.app.jemyeonsobe.api.user.entity.User;
@@ -136,7 +135,46 @@ public class AuthService {
         }
     }
 
-    
+    /**
+     * 리프레시 토큰을 기반으로 한 토큰 재발급
+     * @param request
+     * @param response
+     */
+    public void refreshAccessToken(HttpServletRequest request, HttpServletResponse response) {
+        String refreshToken = extractTokenFromCookies(request);
+
+        if (!jwtTokenProvider.isInvalidToken(refreshToken)) {
+            throw new UnauthorizedException("유효하지 않은 리프레시 토큰입니다.");
+        }
+
+        Long userId = jwtTokenProvider.getUserIdFromToken(refreshToken);
+        Optional<Oauth> oauthOpt = Optional.ofNullable(authRepository.findByUserId(userId)
+            .orElseThrow(() -> new UnauthorizedException("OAuth 정보가 존재하지 않습니다.")));
+
+        User user = oauthOpt.get().getUser();
+        String newAccessToken = jwtTokenProvider.createAccessToken(user);
+        String newRefreshToken = jwtTokenProvider.createRefreshToken(user);
+
+        // DB에 새 refreshToken 저장
+        authRepository.updateRefreshToken(user.getId(), newRefreshToken);
+
+        // accessToken 쿠키로 전달
+        Cookie accessCookie = new Cookie("access_token", newAccessToken);
+        accessCookie.setHttpOnly(true);
+        accessCookie.setSecure(true);
+        accessCookie.setPath("/");
+        accessCookie.setMaxAge(30 * 60);
+        response.addCookie(accessCookie);
+
+        // RefreshToken 쿠키로 전달
+        Cookie refreshCookie = new Cookie("refresh_token", newRefreshToken);
+        refreshCookie.setHttpOnly(true);
+        refreshCookie.setSecure(true);
+        refreshCookie.setPath("/");
+        refreshCookie.setMaxAge(7 * 24 * 60 * 60);
+        response.addCookie(refreshCookie);
+    }
+
     private void addTokenCookies(HttpServletResponse response, String accessToken, String refreshToken) {
         Cookie accessTokenCookie = new Cookie("access_token", accessToken);
         accessTokenCookie.setHttpOnly(true);
@@ -162,6 +200,8 @@ public class AuthService {
         if (request.getCookies() == null) return null;
         for (Cookie cookie : request.getCookies()) {
             if ("access_token".equals(cookie.getName())) {
+                return cookie.getValue();
+            } else if ("refresh_token".equals(cookie.getName())) {
                 return cookie.getValue();
             }
         }

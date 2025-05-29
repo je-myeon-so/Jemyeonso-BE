@@ -46,4 +46,10 @@ public class AuthController {
         authService.logout(request, response);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refresh(HttpServletRequest request, HttpServletResponse response) {
+        authService.refreshAccessToken(request, response);
+        return ResponseEntity.ok(ApiResponse.success(ApiResponseCode.TOKEN_REFRESH_SUCCESS, "토큰이 성공적으로 재발급되었습니다.", null));
+    }
 }
