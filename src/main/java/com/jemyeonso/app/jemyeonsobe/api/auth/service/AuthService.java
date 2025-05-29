@@ -8,6 +8,7 @@ import com.jemyeonso.app.jemyeonsobe.api.user.entity.User;
 import com.jemyeonso.app.jemyeonsobe.api.user.repository.UserRepository;
 import com.jemyeonso.app.jemyeonsobe.common.exception.UnauthorizedException;
 import com.jemyeonso.app.jemyeonsobe.util.JwtTokenProvider;
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -106,37 +107,36 @@ public class AuthService {
      * @return
      */
     public void logout(HttpServletRequest request, HttpServletResponse response) {
-        // 쿠키에서 accessToken 추출
         String accessToken = extractTokenFromCookies(request);
 
-        // 유효성 검사
-        if (accessToken == null || !jwtTokenProvider.isInvalidToken(accessToken)) {
-            if (accessToken == null) {
-                log.info(">>>>> (LogoutServie) Invalid access token");
-            }
-            throw new UnauthorizedException("유효하지 않은 access 토큰입니다.");
-        }
-
-        Long userId;
-        // 토큰에서 userId 추출
         try {
-            userId = jwtTokenProvider.getUserIdFromToken(accessToken);
-        } catch (Exception e) {
-            throw new UnauthorizedException("토큰에서 사용자 ID를 추출할 수 없습니다.");
+            if (accessToken == null) {
+                log.info(">>>>> (LogoutService) Access token is null");
+                throw new UnauthorizedException("유효하지 않은 access 토큰입니다.");
+            }
+
+            if (!jwtTokenProvider.isInvalidToken(accessToken)) {
+                throw new UnauthorizedException("잘못된 access 토큰입니다.");
+            }
+
+            Long userId = jwtTokenProvider.getUserIdFromToken(accessToken);
+
+            // DB에서 RefreshToken null 처리
+            authRepository.findByUserId(userId).ifPresent(oAuth -> {
+                oAuth.setRefreshToken(null);
+                authRepository.save(oAuth);
+            });
+
+            // 쿠키 제거
+            invalidateCookie(response, "access_token");
+            invalidateCookie(response, "refresh_token");
+
+        } catch (ExpiredJwtException e) {
+            throw new UnauthorizedException("만료된 access 토큰입니다.");
         }
-
-
-        // 4. DB에서 RefreshToken null로 만들기
-        authRepository.findByUserId(userId).ifPresent(oAuth -> {
-            oAuth.setRefreshToken(null);
-            authRepository.save(oAuth);
-        });
-
-        // 6. 쿠키 제거
-        invalidateCookie(response, "access_token");
-        invalidateCookie(response, "refresh_token");
     }
 
+    
     private void addTokenCookies(HttpServletResponse response, String accessToken, String refreshToken) {
         Cookie accessTokenCookie = new Cookie("access_token", accessToken);
         accessTokenCookie.setHttpOnly(true);

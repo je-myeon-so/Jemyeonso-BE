@@ -44,25 +44,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         if (token != null) {
-            // 토큰 유효성 검사 실패
-            if (!jwtTokenProvider.isInvalidToken(token)) {
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.setContentType("application/json");
-                response.getWriter().write("{\"error\": \"expired token\"}");
-                response.getWriter().flush();
-                return;
-            }
-
-
-            // 정상 토큰 → userId 추출 및 인증 객체 생성
-            Long userId = jwtTokenProvider.getUserIdFromToken(token);
-
-            Authentication authentication = new UsernamePasswordAuthenticationToken(
-                userId,
-                null,
-                Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
-            );
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+            request.setAttribute("accessToken", token);
         }
 
         // 다음 필터로 진행
