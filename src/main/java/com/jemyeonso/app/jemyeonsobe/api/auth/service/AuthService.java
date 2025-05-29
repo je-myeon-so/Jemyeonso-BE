@@ -1,12 +1,15 @@
 package com.jemyeonso.app.jemyeonsobe.api.auth.service;
 
 import com.jemyeonso.app.jemyeonsobe.api.auth.dto.KakaoUserResponseDto;
+import com.jemyeonso.app.jemyeonsobe.api.auth.dto.LogoutResponseDto;
 import com.jemyeonso.app.jemyeonsobe.api.auth.entity.Oauth;
 import com.jemyeonso.app.jemyeonsobe.api.auth.repository.AuthRepository;
 import com.jemyeonso.app.jemyeonsobe.api.user.entity.User;
 import com.jemyeonso.app.jemyeonsobe.api.user.repository.UserRepository;
+import com.jemyeonso.app.jemyeonsobe.common.exception.UnauthorizedException;
 import com.jemyeonso.app.jemyeonsobe.util.JwtTokenProvider;
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -66,7 +69,7 @@ public class AuthService {
             }
 
         } else {
-            // 4️⃣ 신규 사용자 처리
+            // 신규 사용자 처리
             try {
                 User newUser = User.builder()
                     .nickname(name)
@@ -96,6 +99,44 @@ public class AuthService {
         }
     }
 
+    /**
+     * 로그아웃
+     * @param request
+     * @param response
+     * @return
+     */
+    public void logout(HttpServletRequest request, HttpServletResponse response) {
+        // 쿠키에서 accessToken 추출
+        String accessToken = extractTokenFromCookies(request);
+
+        // 유효성 검사
+        if (accessToken == null || !jwtTokenProvider.isInvalidToken(accessToken)) {
+            if (accessToken == null) {
+                log.info(">>>>> (LogoutServie) Invalid access token");
+            }
+            throw new UnauthorizedException("유효하지 않은 access 토큰입니다.");
+        }
+
+        Long userId;
+        // 토큰에서 userId 추출
+        try {
+            userId = jwtTokenProvider.getUserIdFromToken(accessToken);
+        } catch (Exception e) {
+            throw new UnauthorizedException("토큰에서 사용자 ID를 추출할 수 없습니다.");
+        }
+
+
+        // 4. DB에서 RefreshToken null로 만들기
+        authRepository.findByUserId(userId).ifPresent(oAuth -> {
+            oAuth.setRefreshToken(null);
+            authRepository.save(oAuth);
+        });
+
+        // 6. 쿠키 제거
+        invalidateCookie(response, "access_token");
+        invalidateCookie(response, "refresh_token");
+    }
+
     private void addTokenCookies(HttpServletResponse response, String accessToken, String refreshToken) {
         Cookie accessTokenCookie = new Cookie("access_token", accessToken);
         accessTokenCookie.setHttpOnly(true);
@@ -110,5 +151,28 @@ public class AuthService {
         refreshTokenCookie.setSecure(true);
         refreshTokenCookie.setPath("/");
         response.addCookie(refreshTokenCookie);
+    }
+
+    /**
+     * 쿠키에서 토큰 추출
+     * @param request
+     * @return
+     */
+    private String extractTokenFromCookies(HttpServletRequest request) {
+        if (request.getCookies() == null) return null;
+        for (Cookie cookie : request.getCookies()) {
+            if ("access_token".equals(cookie.getName())) {
+                return cookie.getValue();
+            }
+        }
+        return null;
+    }
+
+    public void invalidateCookie(HttpServletResponse response, String name) {
+        Cookie cookie = new Cookie(name, null);
+        cookie.setHttpOnly(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(0); // 즉시 만료
+        response.addCookie(cookie);
     }
 }

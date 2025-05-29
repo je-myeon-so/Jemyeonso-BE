@@ -10,6 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 public interface AuthRepository extends JpaRepository<Oauth, Long> {
     Optional<Oauth> findByProviderAndProviderId(String provider, String providerId);
 
+    Optional<Oauth> findByUserId(Long userId);
+
     // 사용자 ID로 refresh token을 갱신
     @Transactional
     @Modifying

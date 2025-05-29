@@ -4,10 +4,12 @@ import com.jemyeonso.app.jemyeonsobe.api.auth.dto.AuthResponseDto;
 import com.jemyeonso.app.jemyeonsobe.api.auth.service.AuthService;
 import com.jemyeonso.app.jemyeonsobe.common.enums.ApiResponseCode;
 import com.jemyeonso.app.jemyeonsobe.common.exception.ApiResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -32,5 +34,17 @@ public class AuthController {
         ResponseEntity<ApiResponse<Object>> ok = ResponseEntity.ok(
             ApiResponse.success(ApiResponseCode.SUCCESS, "카카오 콜백에 성공하였습니다.", null));
         return ok;
+    }
+
+    /**
+     * 로그아웃 API
+     * @param request
+     * @param response
+     * @return
+     */
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
+        authService.logout(request, response);
+        return ResponseEntity.noContent().build();
     }
 }
