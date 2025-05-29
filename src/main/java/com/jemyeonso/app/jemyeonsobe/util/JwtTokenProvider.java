@@ -32,7 +32,7 @@ public class JwtTokenProvider {
      * @return
      */
     public String createAccessToken(User user) {
-        long accessTokenValidity = 1000 * 5; // 30분
+        long accessTokenValidity = 1000 * 60 * 30; // 30분
         return Jwts.builder()
             .setSubject(user.getId().toString())
             .claim("email", user.getEmail())
