@@ -44,7 +44,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         if (token != null) {
-            request.setAttribute("accessToken", token);
+//            request.setAttribute("accessToken", token);
+            Long userId = jwtTokenProvider.getUserIdFromToken(token);
+
+            Authentication authentication = new UsernamePasswordAuthenticationToken(
+                userId,
+                null,
+                Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
+            );
+            SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 
         // 다음 필터로 진행
