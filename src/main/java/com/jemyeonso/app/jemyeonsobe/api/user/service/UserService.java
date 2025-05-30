@@ -29,4 +29,22 @@ public class UserService {
             .comment(user.getComment())
             .build();
     }
+
+    public UserInfoResponseDto patchUserInfo(Long userId, String nickname, String profileImgUrl, String comment) {
+        User user = userRepository.findByIdAndDeletedAtIsNull(userId)
+            .orElseThrow(()->new ResourceNotFoundException("유저를 찾을 수 없습니다"));
+
+        if (nickname != null) user.setNickname(nickname);
+        if (profileImgUrl != null) user.setProfileImgUrl(profileImgUrl);
+        if (comment != null) user.setComment(comment);
+
+        return UserInfoResponseDto.builder()
+            .userId(user.getId())
+            .profileImgUrl(user.getProfileImgUrl())
+            .name(user.getName())
+            .nickname(user.getNickname())
+            .email(user.getEmail())
+            .comment(user.getComment())
+            .build();
+    }
 }
