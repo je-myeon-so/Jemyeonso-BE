@@ -110,7 +110,6 @@ public class AuthService {
 
         try {
             if (accessToken == null) {
-                log.info(">>>>> (LogoutService) Access token is null");
                 throw new UnauthorizedException("유효하지 않은 access 토큰입니다.");
             }
 

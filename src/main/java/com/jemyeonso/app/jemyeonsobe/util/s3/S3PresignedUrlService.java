@@ -37,7 +37,6 @@ public class S3PresignedUrlService {
     }
 
     public String generatePresignedUrl(String uuidFileName) {
-        log.info("Service: Generate presigned url for file {}", uuidFileName);
         String key = "profile/" + uuidFileName;                             // S3의 profile 폴더에 저장
 
         Date expiration = new Date();
