@@ -27,8 +27,13 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/backend/auth/**", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**")
-                .permitAll()
+                .requestMatchers("/api/backend/auth/**").permitAll()
+                .requestMatchers(
+                    "/swagger-ui/**",          // swagger-ui 관련 모든 경로
+                    "/swagger-ui.html",        // 옛날 swagger-ui.html 경로
+                    "/v3/api-docs/**",         // OpenAPI 문서 경로
+                    "/swagger-resources/**"    // Swagger 리소스
+                ).permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
