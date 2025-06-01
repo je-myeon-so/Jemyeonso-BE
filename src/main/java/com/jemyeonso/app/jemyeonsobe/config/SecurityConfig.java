@@ -20,23 +20,25 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
-        JwtTokenProvider jwtTokenProvider) throws Exception {
+                                           JwtTokenProvider jwtTokenProvider) throws Exception {
 
         http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))  // CORS 설정 추가
-            .csrf(csrf -> csrf.disable())
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/backend/auth/**").permitAll()
-                .requestMatchers(
-                    "/swagger-ui/**",          // swagger-ui 관련 모든 경로
-                    "/swagger-ui.html",        // 옛날 swagger-ui.html 경로
-                    "/v3/api-docs/**",         // OpenAPI 문서 경로
-                    "/swagger-resources/**"    // Swagger 리소스
-                ).permitAll()
-                .anyRequest().authenticated()
-            )
-            .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))  // CORS 설정 추가
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/backend/auth/**").permitAll()
+                        .requestMatchers("/api/backend/file/**").permitAll()          // Document API 허용
+                        .requestMatchers("/api/backend/interviews/**").permitAll()    // Interview API 허용
+                        .requestMatchers(
+                                "/swagger-ui/**",          // swagger-ui 관련 모든 경로
+                                "/swagger-ui.html",        // 옛날 swagger-ui.html 경로
+                                "/v3/api-docs/**",         // OpenAPI 문서 경로
+                                "/swagger-resources/**"    // Swagger 리소스
+                        ).permitAll()
+                        .anyRequest().authenticated()
+                )
+                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -45,8 +47,8 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(
-            "http://localhost:5173",            // 프론트 로컬 주소
-            "https://jemyeonso.com"              // 도메인 주소
+                "http://localhost:5173",            // 프론트 로컬 주소
+                "https://jemyeonso.com"              // 도메인 주소
         ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"));
         configuration.setAllowedHeaders(List.of("*"));
@@ -58,4 +60,3 @@ public class SecurityConfig {
         return source;
     }
 }
-

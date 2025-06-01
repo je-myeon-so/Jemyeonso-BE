@@ -38,12 +38,13 @@ public class DocumentService {
 
         documentRepository.delete(document);
     }
-    public List<DocumentListResponse> getDocumentsList(int page, int size) {
+
+    public List<DocumentResponse> getDocumentsList(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Page<Document> documentPage = documentRepository.findAll(pageable);
 
         return documentPage.getContent().stream()
-                .map(DocumentListResponse::from)
+                .map(DocumentResponse::from)
                 .collect(Collectors.toList());
     }
 
