@@ -1,12 +1,16 @@
 package com.jemyeonso.app.jemyeonsobe.api.interviews.controller;
 
 import com.jemyeonso.app.jemyeonsobe.api.interviews.dto.InterviewRepositoryResponse;
+import com.jemyeonso.app.jemyeonsobe.api.interviews.dto.InterviewRequestDto;
 import com.jemyeonso.app.jemyeonsobe.common.enums.ApiResponse;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.service.InterviewService;
 import com.jemyeonso.app.jemyeonsobe.common.enums.ApiResponseCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/backend/interviews")
@@ -14,6 +18,16 @@ import org.springframework.web.bind.annotation.*;
 public class InterviewController {
 
     private final InterviewService interviewService;
+
+    @PostMapping
+    public ResponseEntity<?> createInterview(@RequestBody InterviewRequestDto requestDto) {
+        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        Long interviewId = interviewService.createInterview(userId, requestDto);
+        return ResponseEntity.ok(
+                ApiResponse.success(ApiResponseCode.INTERVIEW_CREATE_SUCCESS, "인터뷰 생성에 성공하였습니다.", Map.of("interviewId", interviewId))
+        );
+    }
 
     @GetMapping("/repository")
     public ResponseEntity<ApiResponse<InterviewRepositoryResponse>> getInterviewRepository(
