@@ -74,6 +74,7 @@ Thumbs.db
 ### Spring Boot ###
 application-*.yml
 application-*.properties
+application.properties
 
 ### Others ###
 .env
