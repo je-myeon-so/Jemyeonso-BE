@@ -10,10 +10,13 @@ import lombok.NoArgsConstructor;
 public class AiQuestionResponse {
     private int code;
     private String message;
-    private Data data;
+    private AiQuestionData data;
 
-    @lombok.Data
-    public static class Data {
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AiQuestionData {
         private String question;
+        private String questionType; // 예: "TECHNOLOGY", "PERSONAL" 등
     }
 }

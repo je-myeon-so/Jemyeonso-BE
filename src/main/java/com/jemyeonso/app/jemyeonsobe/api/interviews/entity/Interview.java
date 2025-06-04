@@ -29,8 +29,8 @@ public class Interview {
     private String title;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "question_type", nullable = false)
-    private QuestionType questionType;
+    @Column(name = "question_category", nullable = false)
+    private QuestionType questionCategory;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "question_level", nullable = false)

@@ -10,6 +10,9 @@ import lombok.NoArgsConstructor;
 public class AiQuestionRequest {
     private String questionLevel;
     private String jobType;
-    private String questionType;
+    private String questionCategory;
+    private String previousQuestion;
+    private String previousAnswer;
+    private Long documentId;
 }
 

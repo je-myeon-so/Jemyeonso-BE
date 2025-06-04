@@ -29,7 +29,7 @@ public class InterviewListResponse {
                 .documentId(interview.getDocumentId())
                 .userId(interview.getUserId())
                 .title(interview.getTitle())
-                .questionType(interview.getQuestionType().name())
+                .questionType(interview.getQuestionCategory().name())
                 .questionLevel(interview.getQuestionLevel().name())
                 .jobtype(interview.getJobtype())  // 추가된 매핑
                 .createdAt(interview.getCreatedAt())

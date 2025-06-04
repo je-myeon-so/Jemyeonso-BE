@@ -2,6 +2,7 @@ package com.jemyeonso.app.jemyeonsobe.api.interviews.controller;
 
 import com.jemyeonso.app.jemyeonsobe.api.interviews.dto.InterviewRepositoryResponse;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.dto.InterviewRequestDto;
+import com.jemyeonso.app.jemyeonsobe.api.interviews.dto.InterviewResponseDto;
 import com.jemyeonso.app.jemyeonsobe.common.enums.ApiResponse;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.service.InterviewService;
 import com.jemyeonso.app.jemyeonsobe.common.enums.ApiResponseCode;
@@ -23,10 +24,9 @@ public class InterviewController {
     public ResponseEntity<?> createInterview(@RequestBody InterviewRequestDto requestDto) {
         Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        Long interviewId = interviewService.createInterview(userId, requestDto);
+        InterviewResponseDto interviewResponseDto = interviewService.createInterview(userId, requestDto);
         return ResponseEntity.ok(
-                ApiResponse.success(ApiResponseCode.INTERVIEW_CREATE_SUCCESS, "인터뷰 생성에 성공하였습니다.", Map.of("interviewId", interviewId))
-        );
+                ApiResponse.success(ApiResponseCode.INTERVIEW_CREATE_SUCCESS, "인터뷰 생성에 성공하였습니다.", interviewResponseDto));
     }
 
     @GetMapping("/repository")
