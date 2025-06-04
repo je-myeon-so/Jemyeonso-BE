@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @AllArgsConstructor
@@ -52,6 +54,10 @@ public class Interview {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "document_id", insertable = false, updatable = false)
     private Document document;
+
+    // Question과의 연관관계 추가
+    @OneToMany(mappedBy = "interview", fetch = FetchType.LAZY)
+    private List<Question> questions = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {
