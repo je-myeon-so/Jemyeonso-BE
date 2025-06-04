@@ -2,17 +2,19 @@ package com.jemyeonso.app.jemyeonsobe.api.interviews.entity;
 
 import com.jemyeonso.app.jemyeonsobe.api.document.entity.Document;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "interviews")
-@Getter
+@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Getter
+@Setter
+@Builder
+@Table(name = "interviews")
 public class Interview {
 
     @Id
@@ -29,8 +31,8 @@ public class Interview {
     private String title;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "question_type", nullable = false)
-    private QuestionType questionType;
+    @Column(name = "question_category", nullable = false)
+    private QuestionType questionCategory;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "question_level", nullable = false)

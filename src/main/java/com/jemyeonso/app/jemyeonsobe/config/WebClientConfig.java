@@ -1,5 +1,6 @@
 package com.jemyeonso.app.jemyeonsobe.config;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,5 +31,13 @@ public class WebClientConfig {
             .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE)
             .defaultHeader(HttpHeaders.AUTHORIZATION, "KakaoAK " + adminKey)
             .build();
+    }
+
+    @Bean
+    @Qualifier("aiWebClient")
+    public WebClient aiWebClient() {
+        return WebClient.builder()
+                .baseUrl("http://fastapi:8000")     // 도커 컨테이너 네트워크 이름
+                .build();
     }
 }
