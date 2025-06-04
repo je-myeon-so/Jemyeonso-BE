@@ -1,6 +1,7 @@
 package com.jemyeonso.app.jemyeonsobe.api.interviews.service.ai;
 
 import com.jemyeonso.app.jemyeonsobe.api.interviews.entity.Question;
+import com.jemyeonso.app.jemyeonsobe.api.interviews.repository.InterviewRepository;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.repository.QuestionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -14,6 +15,7 @@ import java.time.LocalDateTime;
 public class AiQuestionService {
 
     private final QuestionRepository questionRepository;
+    private final InterviewRepository interviewRepository;
 
     @Qualifier("aiWebClient")
     private final WebClient aiWebClient;
@@ -35,13 +37,13 @@ public class AiQuestionService {
 
         // 질문 저장
         Question question = Question.builder()
-            .interviewId(interviewId)
+            .interview(interviewRepository.getReferenceById(interviewId))
             .content(aiResponse.getData().getQuestion())
             .createdAt(LocalDateTime.now())
             .build();
-        questionRepository.save(question);
 
-        // 그대로 리턴 (questionType은 DB 저장하지 않음)
+        questionRepository.save(question);
+        
         return aiResponse;
     }
 }

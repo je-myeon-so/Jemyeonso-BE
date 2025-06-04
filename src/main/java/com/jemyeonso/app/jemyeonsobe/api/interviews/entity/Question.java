@@ -18,8 +18,9 @@ public class Question {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "interview_id", nullable = false)
-    private Long interviewId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "interview_id", insertable = false, updatable = false)
+    private Interview interview;
 
     @Column(name = "content", nullable = false, columnDefinition = "TEXT")
     private String content;
