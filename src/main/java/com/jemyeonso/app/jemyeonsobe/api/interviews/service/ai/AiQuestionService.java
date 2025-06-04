@@ -43,7 +43,7 @@ public class AiQuestionService {
             .build();
 
         questionRepository.save(question);
-        
+
         return aiResponse;
     }
 }
