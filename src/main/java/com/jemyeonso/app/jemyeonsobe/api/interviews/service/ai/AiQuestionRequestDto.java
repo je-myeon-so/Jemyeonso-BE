@@ -1,4 +1,4 @@
-package com.jemyeonso.app.jemyeonsobe.api.interviews.service;
+package com.jemyeonso.app.jemyeonsobe.api.interviews.service.ai;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class AiQuestionRequest {
+public class AiQuestionRequestDto {
     private String questionLevel;
     private String jobType;
     private String questionCategory;

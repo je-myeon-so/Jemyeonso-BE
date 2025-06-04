@@ -1,4 +1,4 @@
-package com.jemyeonso.app.jemyeonsobe.api.interviews.service;
+package com.jemyeonso.app.jemyeonsobe.api.interviews.service.ai;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class AiQuestionResponse {
+public class AiQuestionResponseDto {
     private int code;
     private String message;
     private AiQuestionData data;
@@ -17,6 +17,6 @@ public class AiQuestionResponse {
     @AllArgsConstructor
     public static class AiQuestionData {
         private String question;
-        private String questionType; // 예: "TECHNOLOGY", "PERSONAL" 등
+        private String questionType;
     }
 }

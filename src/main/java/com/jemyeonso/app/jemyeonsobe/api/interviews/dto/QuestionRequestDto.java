@@ -5,11 +5,12 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class
-InterviewRequestDto {
-    private String interviewTitle;
-    private String questionCategory;
+public class QuestionRequestDto {
+    private Long interviewId;
     private String questionLevel;
     private String jobType;
+    private String questionCategory;
+    private String previousQuestion;
+    private String previousAnswer;
     private Long documentId;
 }
