@@ -1,6 +1,5 @@
 package com.jemyeonso.app.jemyeonsobe.api.interviews.entity;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -9,10 +8,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -20,30 +16,32 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "answers")
+@Table(name = "feedbacks")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Answer {
+public class Feedback {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "question_id", nullable = false, unique = true)
-    private Question question;
+    // FK 관계 설정
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "answer_id", nullable = false)
+    private Answer answer;
 
-    @Column(name = "answer_time")
-    private String answerTime;
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String feedback;
 
-    @Column(name = "content", nullable = false, columnDefinition = "TEXT")
-    private String content;
+    @Column(name = "error_text", nullable = false, columnDefinition = "TEXT")
+    private String errorText;
 
-    @Column(name = "score")
-    private Integer score;
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String suggestion;
 
-    @OneToMany(mappedBy = "answer", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<Feedback> feedbacks;
+    @Column(name = "error_type", nullable = false, columnDefinition = "TEXT")
+    private String errorType;
 }
