@@ -1,5 +1,6 @@
 package com.jemyeonso.app.jemyeonsobe.api.interviews.controller;
 
+import com.jemyeonso.app.jemyeonsobe.api.interviews.dto.InterviewDetailsResponse;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.dto.InterviewRepositoryResponse;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.dto.InterviewRequestDto;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.dto.InterviewResponseDto;
@@ -61,7 +62,6 @@ public class InterviewController {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 에러")
     })
-
     @PostMapping("/questions")
     public ResponseEntity<?> createQuestion(@RequestBody QuestionRequestDto requestDto) {
 
@@ -71,6 +71,21 @@ public class InterviewController {
             ApiResponse.success(
                 ApiResponseCode.INTERVIEW_QUESTION_CREATE_SUCCESS, "후속 질문 생성에 성공하였습니다.", responseDto
             )
+        );
+    }
+
+    @GetMapping("/{interviewId}")
+    public ResponseEntity<ApiResponse<InterviewDetailsResponse>> getInterviewDetails(
+        @PathVariable Long interviewId) {
+        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        InterviewDetailsResponse response = interviewService.getInterviewDetails(interviewId);
+
+        return ResponseEntity.ok(
+            ApiResponse.success(
+                ApiResponseCode.INTERVIEW_DETAILS_FETCH_SUCCESS,
+                "면접 질문/답변/분석 조회에 성공하였습니다.",
+                response)
         );
     }
 
