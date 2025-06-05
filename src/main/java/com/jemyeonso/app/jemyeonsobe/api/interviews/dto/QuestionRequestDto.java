@@ -10,7 +10,9 @@ public class QuestionRequestDto {
     private String questionLevel;
     private String jobType;
     private String questionCategory;
+    private Long previousQuestionId;
     private String previousQuestion;
     private String previousAnswer;
+    private String answerTime;
     private Long documentId;
 }

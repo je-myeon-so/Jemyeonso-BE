@@ -5,8 +5,12 @@ import com.jemyeonso.app.jemyeonsobe.api.interviews.dto.InterviewRepositoryRespo
 import com.jemyeonso.app.jemyeonsobe.api.interviews.dto.InterviewRequestDto;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.dto.InterviewResponseDto;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.dto.QuestionRequestDto;
+import com.jemyeonso.app.jemyeonsobe.api.interviews.entity.Answer;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.entity.Interview;
+import com.jemyeonso.app.jemyeonsobe.api.interviews.entity.Question;
+import com.jemyeonso.app.jemyeonsobe.api.interviews.repository.AnswerRepository;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.repository.InterviewRepository;
+import com.jemyeonso.app.jemyeonsobe.api.interviews.repository.QuestionRepository;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.service.ai.AiQuestionRequestDto;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.service.ai.AiQuestionResponseDto;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.service.ai.AiQuestionService;
@@ -28,6 +32,8 @@ import java.util.stream.Collectors;
 public class InterviewService {
 
     private final InterviewRepository interviewRepository;
+    private final QuestionRepository questionRepository;
+    private final AnswerRepository answerRepository;
     private final AiQuestionService aiQuestionService;
 
     @Transactional
@@ -62,7 +68,21 @@ public class InterviewService {
         Interview interview = interviewRepository.findById(requestDto.getInterviewId())
             .orElseThrow(() -> new ResourceNotFoundException("해당 인터뷰가 존재하지 않습니다."));
 
-        // AI 요청 구성
+        if (requestDto.getPreviousQuestionId() != null && requestDto.getPreviousAnswer() != null) {
+            Question previousQuestion = questionRepository.findById(requestDto.getPreviousQuestionId())
+                .orElseThrow(() -> new ResourceNotFoundException("이전 질문을 찾을 수 없습니다."));
+
+            Answer answer = Answer.builder()
+                .question(previousQuestion)
+                .content(requestDto.getPreviousAnswer())
+                .answerTime(requestDto.getAnswerTime())
+                .score(null)
+                .build();
+
+            answerRepository.save(answer);
+        }
+
+        // AI 요청
         AiQuestionRequestDto aiRequest = new AiQuestionRequestDto(
             interview.getQuestionLevel().name(),
             interview.getJobtype(),

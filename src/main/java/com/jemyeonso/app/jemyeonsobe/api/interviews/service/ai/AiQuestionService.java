@@ -47,13 +47,13 @@ public class AiQuestionService {
         return aiResponse;
     }
 }
-    //            // 실제 WebClient 호출 대신 더미 응답 생성
+//                // 실제 WebClient 호출 대신 더미 응답 생성
 //            String dummyQuestion = "이것은 후속 질문 테스트입니다. (이전 질문: " + request.getPreviousQuestion() + ")";
 //            String dummyQuestionType = "TECHNOLOGY"; // 또는 PERSONAL, BEHAVIORAL 등
 //
 //            // 질문 저장
 //            Question question = Question.builder()
-//                .interviewId(interviewId)
+//                .interview(interviewRepository.getReferenceById(interviewId))
 //                .content(dummyQuestion)
 //                .createdAt(LocalDateTime.now())
 //                .build();

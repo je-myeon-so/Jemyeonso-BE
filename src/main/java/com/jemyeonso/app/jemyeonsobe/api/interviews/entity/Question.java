@@ -19,7 +19,7 @@ public class Question {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "interview_id", insertable = false, updatable = false)
+    @JoinColumn(name = "interview_id")
     private Interview interview;
 
     @Column(name = "content", nullable = false, columnDefinition = "TEXT")
