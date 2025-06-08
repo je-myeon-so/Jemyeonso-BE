@@ -35,10 +35,11 @@ public class AiQuestionService {
 
         // 질문 저장
         Question question = Question.builder()
-            .interviewId(interviewId)
-            .content(aiResponse.getData().getQuestion())
-            .createdAt(LocalDateTime.now())
-            .build();
+                .interviewId(interviewId)
+                .content(aiResponse.getData().getQuestion())
+                .questionType(aiResponse.getData().getQuestionType())
+                .createdAt(LocalDateTime.now())
+                .build();
         questionRepository.save(question);
 
         // 그대로 리턴 (questionType은 DB 저장하지 않음)
