@@ -120,4 +120,31 @@ public class InterviewController {
                 ApiResponse.success(ApiResponseCode.INTERVIEW_QUESTIONS_GET_SUCCESS, responseDto)
         );
     }
+
+    @GetMapping("/{interviewId}/questions/{questionId}")
+    @Operation(
+            summary = "질문 상세 조회",
+            description = "특정 질문의 상세 정보(답변, 피드백 포함)를 조회합니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "질문 상세 조회 성공",
+                    content = @Content(schema = @Schema(implementation = QuestionDetailResponseDto.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "존재하지 않는 질문"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한 없음")
+    })
+    public ResponseEntity<?> getQuestionDetail(
+            @PathVariable Long interviewId,
+            @PathVariable Long questionId
+    ) {
+        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        QuestionDetailResponseDto responseDto = interviewService.getQuestionDetail(interviewId, questionId, userId);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(ApiResponseCode.QUESTION_DETAIL_GET_SUCCESS, responseDto)
+        );
+    }
 }

@@ -1,8 +1,10 @@
 package com.jemyeonso.app.jemyeonsobe.api.interviews.service;
 
 import com.jemyeonso.app.jemyeonsobe.api.interviews.dto.*;
+import com.jemyeonso.app.jemyeonsobe.api.interviews.entity.Answer;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.entity.Interview;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.entity.Question;
+import com.jemyeonso.app.jemyeonsobe.api.interviews.repository.AnswerRepository;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.repository.InterviewRepository;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.repository.QuestionRepository;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.service.ai.AiQuestionRequestDto;
@@ -19,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,6 +32,7 @@ public class InterviewService {
     private final InterviewRepository interviewRepository;
     private final QuestionRepository questionRepository;
     private final AiQuestionService aiQuestionService;
+    private final AnswerRepository answerRepository;
 
     @Transactional
     public InterviewResponseDto createInterview(Long userId, InterviewRequestDto requestDto) {
@@ -158,6 +162,54 @@ public class InterviewService {
                 .totalScore(interview.getTotalScore())
                 .createdAt(interview.getCreatedAt())
                 .questions(questionSummaries)
+                .build();
+    }
+
+    public QuestionDetailResponseDto getQuestionDetail(Long interviewId, Long questionId, Long userId) {
+        // 면접 존재 여부 및 권한 확인
+        Interview interview = interviewRepository.findById(interviewId)
+                .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 면접입니다."));
+
+        if (!interview.getUserId().equals(userId)) {
+            throw new InterviewAccessDeniedException("해당 면접에 접근할 권한이 없습니다.");
+        }
+
+        // 질문 존재 여부 및 면접 소속 확인
+        Question question = questionRepository.findByIdAndInterviewId(questionId, interviewId)
+                .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 질문입니다."));
+
+        // 답변 조회 (피드백과 함께)
+        Optional<Answer> answerOpt = answerRepository.findByQuestionIdWithFeedbacks(questionId);
+
+        QuestionDetailResponseDto.AnswerDetailDto answerDetail = null;
+        if (answerOpt.isPresent()) {
+            Answer answer = answerOpt.get();
+
+            List<QuestionDetailResponseDto.FeedbackDto> feedbackDtos = answer.getFeedbacks().stream()
+                    .map(feedback -> QuestionDetailResponseDto.FeedbackDto.builder()
+                            .feedbackId(feedback.getId())
+                            .errorText(feedback.getErrorText())
+                            .errorType(feedback.getErrorType())
+                            .feedback(feedback.getFeedback())
+                            .suggestion(feedback.getSuggestion())
+                            .build())
+                    .collect(Collectors.toList());
+
+            answerDetail = QuestionDetailResponseDto.AnswerDetailDto.builder()
+                    .answerId(answer.getId())
+                    .content(answer.getContent())
+                    .answerTime(answer.getAnswerTime())
+                    .feedbacks(feedbackDtos)
+                    .build();
+        }
+
+        return QuestionDetailResponseDto.builder()
+                .questionId(question.getId())
+                .interviewId(question.getInterviewId())
+                .content(question.getContent())
+                .questionType(question.getQuestionType())
+                .createdAt(question.getCreatedAt())
+                .answer(answerDetail)
                 .build();
     }
 }
