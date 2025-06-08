@@ -56,4 +56,10 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(status)
             .body(ApiResponse.fail(code, message));
     }
+
+    @ExceptionHandler(InterviewAccessDeniedException.class)
+    public ResponseEntity<ApiResponse<?>> handleInterviewAccessDenied(InterviewAccessDeniedException ex) {
+        log.warn("[InterviewAccessDenied] {}", ex.getMessage());
+        return buildErrorResponse(ApiResponseCode.INTERVIEW_ACCESS_DENIED, ex.getMessage(), HttpStatus.FORBIDDEN);
+    }
 }

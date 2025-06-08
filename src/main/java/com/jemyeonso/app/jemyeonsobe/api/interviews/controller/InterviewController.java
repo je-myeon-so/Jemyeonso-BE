@@ -1,9 +1,7 @@
 package com.jemyeonso.app.jemyeonsobe.api.interviews.controller;
 
-import com.jemyeonso.app.jemyeonsobe.api.interviews.dto.InterviewRepositoryResponse;
-import com.jemyeonso.app.jemyeonsobe.api.interviews.dto.InterviewRequestDto;
-import com.jemyeonso.app.jemyeonsobe.api.interviews.dto.InterviewResponseDto;
-import com.jemyeonso.app.jemyeonsobe.api.interviews.dto.QuestionRequestDto;
+import com.jemyeonso.app.jemyeonsobe.api.interviews.dto.*;
+import com.jemyeonso.app.jemyeonsobe.api.interviews.repository.QuestionRepository;
 import com.jemyeonso.app.jemyeonsobe.common.enums.ApiResponse;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.service.InterviewService;
 import com.jemyeonso.app.jemyeonsobe.common.enums.ApiResponseCode;
@@ -26,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 public class InterviewController {
 
     private final InterviewService interviewService;
+    private final QuestionRepository questionRepository;
 
     @Operation(
             summary = "면접 세션 생성",
@@ -96,5 +95,29 @@ public class InterviewController {
             return ResponseEntity.status(500)
                     .body(ApiResponse.error(ApiResponseCode.INTERNAL_ERROR));
         }
+    }
+
+    @GetMapping("/{interviewId}/questions")
+    @Operation(
+            summary = "면접 질문 목록 조회",
+            description = "특정 면접의 질문 목록을 조회합니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "면접 질문 목록 조회 성공",
+                    content = @Content(schema = @Schema(implementation = InterviewQuestionsResponseDto.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "존재하지 않는 면접"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한 없음")
+    })
+    public ResponseEntity<?> getInterviewQuestions(@PathVariable Long interviewId) {
+        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        InterviewQuestionsResponseDto responseDto = interviewService.getInterviewQuestions(interviewId, userId);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(ApiResponseCode.INTERVIEW_QUESTIONS_GET_SUCCESS, responseDto)
+        );
     }
 }
