@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import com.jemyeonso.app.jemyeonsobe.api.document.dto.FileUploadResponseDto;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -85,5 +87,48 @@ public class DocumentController {
             return ResponseEntity.status(500)
                     .body(ApiResponse.error("INTERNAL_ERROR", "서버 오류가 발생했습니다."));
         }
+    }
+
+    @PostMapping(consumes = "multipart/form-data")
+    @Operation(summary = "파일 업로드", description = "PDF 파일을 업로드하고 S3에 저장합니다.")
+    public ResponseEntity<ApiResponse<FileUploadResponseDto>> uploadFile(
+            @Parameter(description = "업로드할 PDF 파일") @RequestParam("file") MultipartFile file,
+            @Parameter(description = "문서 타입 (resume 또는 portfolio)") @RequestParam("type") String type) {
+
+        // 현재 로그인한 유저 ID 추출
+        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        try {
+            FileUploadResponseDto response = documentService.uploadFile(file, type, userId);
+            return ResponseEntity.ok(ApiResponse.success("파일 업로드에 성공하였습니다.", response));
+
+        } catch (IllegalArgumentException e) {
+            // 파일 검증 실패
+            String errorCode = getErrorCodeFromMessage(e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(errorCode, e.getMessage()));
+
+        } catch (RuntimeException e) {
+            // S3 업로드 실패 등
+            if (e.getMessage().contains("S3")) {
+                return ResponseEntity.status(500)
+                        .body(ApiResponse.error("S3_UPLOAD_FAILED", "파일 업로드 중 오류가 발생했습니다."));
+            }
+            return ResponseEntity.status(500)
+                    .body(ApiResponse.error("INTERNAL_SERVER_ERROR", "서버 내부 오류가 발생했습니다."));
+        }
+    }
+
+    private String getErrorCodeFromMessage(String message) {
+        if (message.contains("빈 파일")) {
+            return "EMPTY_FILE";
+        } else if (message.contains("파일 크기")) {
+            return "FILE_SIZE_EXCEEDED";
+        } else if (message.contains("PDF")) {
+            return "INVALID_FILE_TYPE";
+        } else if (message.contains("문서 타입")) {
+            return "INVALID_DOCUMENT_TYPE";
+        }
+        return "BAD_REQUEST";
     }
 }
