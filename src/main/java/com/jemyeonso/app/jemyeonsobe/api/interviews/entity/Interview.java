@@ -56,7 +56,8 @@ public class Interview {
     private Document document;
 
     // Question과의 연관관계 추가
-    @OneToMany(mappedBy = "interview", fetch = FetchType.LAZY)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name = "interview_id")
     private List<Question> questions = new ArrayList<>();
 
     @PrePersist
