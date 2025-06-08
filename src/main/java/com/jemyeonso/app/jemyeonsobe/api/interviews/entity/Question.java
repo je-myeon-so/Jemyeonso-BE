@@ -26,4 +26,7 @@ public class Question {
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "question_type", nullable = false, length = 50)
+    private String questionType;
 }

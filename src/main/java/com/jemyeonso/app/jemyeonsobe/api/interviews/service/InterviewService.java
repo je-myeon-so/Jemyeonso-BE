@@ -1,12 +1,10 @@
 package com.jemyeonso.app.jemyeonsobe.api.interviews.service;
 
-import com.jemyeonso.app.jemyeonsobe.api.interviews.dto.InterviewListResponse;
-import com.jemyeonso.app.jemyeonsobe.api.interviews.dto.InterviewRepositoryResponse;
-import com.jemyeonso.app.jemyeonsobe.api.interviews.dto.InterviewRequestDto;
-import com.jemyeonso.app.jemyeonsobe.api.interviews.dto.InterviewResponseDto;
-import com.jemyeonso.app.jemyeonsobe.api.interviews.dto.QuestionRequestDto;
+import com.jemyeonso.app.jemyeonsobe.api.interviews.dto.*;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.entity.Interview;
+import com.jemyeonso.app.jemyeonsobe.api.interviews.entity.Question;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.repository.InterviewRepository;
+import com.jemyeonso.app.jemyeonsobe.api.interviews.repository.QuestionRepository;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.service.ai.AiQuestionRequestDto;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.service.ai.AiQuestionResponseDto;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.service.ai.AiQuestionService;
@@ -29,6 +27,7 @@ import java.util.stream.Collectors;
 public class InterviewService {
 
     private final InterviewRepository interviewRepository;
+    private final QuestionRepository questionRepository;
     private final AiQuestionService aiQuestionService;
 
     @Transactional
@@ -124,5 +123,41 @@ public class InterviewService {
                 .collect(Collectors.toList());
 
         return new InterviewRepositoryResponse(interviews);
+    }
+
+    public InterviewQuestionsResponseDto getInterviewQuestions(Long interviewId, Long userId) {
+        // 면접 존재 여부 확인 - 기존 ResourceNotFoundException 활용
+        Interview interview = interviewRepository.findById(interviewId)
+                .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 면접입니다."));
+
+        // 권한 확인 - 기존 InterviewAccessDeniedException 활용
+        if (!interview.getUserId().equals(userId)) {
+            throw new InterviewAccessDeniedException("해당 면접에 접근할 권한이 없습니다.");
+        }
+
+        // 질문 목록 조회
+        List<Question> questions = questionRepository.findByInterviewIdOrderByCreatedAtAsc(interviewId);
+
+        List<InterviewQuestionsResponseDto.QuestionSummaryDto> questionSummaries = questions.stream()
+                .map(question -> InterviewQuestionsResponseDto.QuestionSummaryDto.builder()
+                        .questionId(question.getId())
+                        .content(question.getContent())
+                        .questionType(question.getQuestionType())
+                        .createdAt(question.getCreatedAt())
+                        .build())
+                .collect(Collectors.toList());
+
+        return InterviewQuestionsResponseDto.builder()
+                .interviewId(interview.getId())
+                .documentId(interview.getDocumentId())
+                .userId(interview.getUserId())
+                .title(interview.getTitle())
+                .questionCategory(interview.getQuestionCategory().name())
+                .questionLevel(interview.getQuestionLevel().name())
+                .jobtype(interview.getJobtype())
+                .totalScore(interview.getTotalScore())
+                .createdAt(interview.getCreatedAt())
+                .questions(questionSummaries)
+                .build();
     }
 }

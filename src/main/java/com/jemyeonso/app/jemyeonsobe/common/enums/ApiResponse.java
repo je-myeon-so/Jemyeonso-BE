@@ -46,6 +46,7 @@ public class ApiResponse<T> {
             case FILE_LIST_SUCCESS: return "파일 목록 조회에 성공하였습니다.";
             case FILE_DELETE_SUCCESS: return "파일이 삭제되었습니다.";
             case INTERVIEW_LIST_GET_SUCCESS: return "면접 목록 조회에 성공하였습니다.";
+            case INTERVIEW_QUESTIONS_GET_SUCCESS: return "면접 질문 목록 조회에 성공하였습니다.";
             case FILE_NOT_FOUND: return "파일을 찾을 수 없습니다.";
             case FILE_ACCESS_DENIED: return "파일에 접근할 권한이 없습니다.";
             case INTERVIEW_NOT_FOUND: return "면접을 찾을 수 없습니다.";
