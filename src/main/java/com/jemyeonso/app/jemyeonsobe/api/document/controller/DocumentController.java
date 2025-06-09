@@ -1,5 +1,6 @@
 package com.jemyeonso.app.jemyeonsobe.api.document.controller;
 
+import com.jemyeonso.app.jemyeonsobe.api.document.dto.DocumentRepositoryResponse;
 import com.jemyeonso.app.jemyeonsobe.api.document.dto.DocumentResponse;
 import com.jemyeonso.app.jemyeonsobe.api.document.dto.ApiResponse;
 import com.jemyeonso.app.jemyeonsobe.common.enums.*;
@@ -69,7 +70,7 @@ public class DocumentController {
 
     @GetMapping
     @Operation(summary = "문서 목록 조회", description = "현재 로그인한 사용자의 문서 목록을 페이지네이션으로 조회합니다.")
-    public ResponseEntity<ApiResponse<List<DocumentResponse>>> getDocuments(
+    public ResponseEntity<ApiResponse<DocumentRepositoryResponse>> getDocuments(
             @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "페이지 크기 (1-100)") @RequestParam(defaultValue = "10") int size) {
 
@@ -82,8 +83,8 @@ public class DocumentController {
         Long userId = SecurityUtil.getCurrentUserId();
 
         try {
-            List<DocumentResponse> documents = documentService.getDocumentsList(page, size, userId);
-            return ResponseEntity.ok(ApiResponse.success("파일 목록 조회에 성공하였습니다.", documents));
+            DocumentRepositoryResponse response = documentService.getDocumentsList(page, size, userId);
+            return ResponseEntity.ok(ApiResponse.success("파일 목록 조회에 성공하였습니다.", response));
         } catch (Exception e) {
             return ResponseEntity.status(500)
                     .body(ApiResponse.error("INTERNAL_ERROR", "서버 오류가 발생했습니다."));
