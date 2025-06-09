@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -42,7 +43,7 @@ public class DocumentService {
 
     @Transactional
     public void deleteDocument(Long documentId, Long userId) {
-        Document document = documentRepository.findById(documentId)
+        Document document = documentRepository.findByIdAndDeletedAtIsNull(documentId)
                 .orElseThrow(() -> new DocumentNotFoundException("Document not found with id: " + documentId));
 
         // 유저 검증: 문서 소유자와 요청한 유저가 다르면 삭제 거부
@@ -50,7 +51,7 @@ public class DocumentService {
             throw new DocumentAccessDeniedException("Access denied to delete document with id: " + documentId);
         }
 
-        documentRepository.delete(document);
+        document.setDeletedAt(LocalDateTime.now());
     }
 
     public DocumentRepositoryResponse getDocumentsList(int page, int size, Long userId) {

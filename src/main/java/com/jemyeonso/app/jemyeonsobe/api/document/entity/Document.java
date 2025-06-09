@@ -1,16 +1,15 @@
 package com.jemyeonso.app.jemyeonsobe.api.document.entity;
 
+import jakarta.annotation.PreDestroy;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
 import java.time.LocalDateTime;
-import lombok.Builder;
-import lombok.AllArgsConstructor;
 
 @Entity
 @Table(name = "documents")
 @Getter
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
 @AllArgsConstructor
@@ -41,6 +40,9 @@ public class Document {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 
     @PrePersist
     protected void onCreate() {
