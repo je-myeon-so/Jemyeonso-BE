@@ -37,7 +37,7 @@ public class WebClientConfig {
     @Qualifier("aiWebClient")
     public WebClient aiWebClient() {
         return WebClient.builder()
-                .baseUrl("http://fastapi:8000")     // 도커 컨테이너 네트워크 이름
+                .baseUrl("http://172.20.5.180:8000")     // 도커 컨테이너 네트워크 이름
                 .build();
     }
 }

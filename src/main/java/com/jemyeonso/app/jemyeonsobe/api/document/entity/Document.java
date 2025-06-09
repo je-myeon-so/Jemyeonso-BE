@@ -33,7 +33,7 @@ public class Document {
     @Column(name = "content", nullable = false, columnDefinition = "TEXT")
     private String content;
 
-    @Column(name = "link", nullable = false, length = 100)
+    @Column(name = "link", nullable = false, length = 500)
     private String link;
 
     @Column(name = "created_at", nullable = false)

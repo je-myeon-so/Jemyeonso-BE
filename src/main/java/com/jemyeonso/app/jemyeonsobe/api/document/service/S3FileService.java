@@ -10,8 +10,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 @Slf4j
 @Service
@@ -27,12 +25,11 @@ public class S3FileService {
     private String region;
 
     public String uploadFile(MultipartFile file, Long userId, String documentType) throws IOException {
-        // 파일명 생성: type_yyyyMMdd_HHmmss.pdf
-        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
-        String fileName = documentType + "_" + timestamp + ".pdf";
+        // 원본 파일명 사용
+        String originalFileName = file.getOriginalFilename();
 
-        // S3 키 생성: documents/{userId}/{fileName}
-        String s3Key = "documents/" + userId + "/" + fileName;
+        // S3 키 생성: documents/{documentType}s/{원본파일명}
+        String s3Key = "documents/" + documentType + "s/" + originalFileName;
 
         try {
             // 메타데이터 설정
