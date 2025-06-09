@@ -6,6 +6,7 @@ import com.jemyeonso.app.jemyeonsobe.common.enums.*;
 import com.jemyeonso.app.jemyeonsobe.api.document.service.DocumentService;
 import com.jemyeonso.app.jemyeonsobe.common.exception.DocumentAccessDeniedException;
 import com.jemyeonso.app.jemyeonsobe.common.exception.DocumentNotFoundException;
+import com.jemyeonso.app.jemyeonsobe.util.SecurityUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -32,7 +33,7 @@ public class DocumentController {
             @Parameter(description = "문서 ID") @PathVariable("document_id") Long documentId) {
 
         // 현재 로그인한 유저 ID 추출
-        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long userId = SecurityUtil.getCurrentUserId();
 
         try {
             DocumentResponse document = documentService.getDocument(documentId, userId);
@@ -52,7 +53,7 @@ public class DocumentController {
             @Parameter(description = "문서 ID") @PathVariable("document_id") Long documentId) {
 
         // 현재 로그인한 유저 ID 추출
-        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long userId = SecurityUtil.getCurrentUserId();
 
         try {
             documentService.deleteDocument(documentId, userId);
@@ -78,7 +79,7 @@ public class DocumentController {
         }
 
         // 현재 로그인한 유저 ID 추출
-        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long userId = SecurityUtil.getCurrentUserId();
 
         try {
             List<DocumentResponse> documents = documentService.getDocumentsList(page, size, userId);
@@ -96,7 +97,7 @@ public class DocumentController {
             @Parameter(description = "문서 타입 (resume 또는 portfolio)") @RequestParam("type") String type) {
 
         // 현재 로그인한 유저 ID 추출
-        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long userId = SecurityUtil.getCurrentUserId();
 
         try {
             FileUploadResponseDto response = documentService.uploadFile(file, type, userId);

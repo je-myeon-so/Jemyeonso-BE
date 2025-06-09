@@ -29,6 +29,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return requestURI.equals("/api/backend/v1/auth/refresh") ||
                 requestURI.startsWith("/swagger-ui/") ||
                 requestURI.startsWith("/v3/api-docs/") ||
+                requestURI.equals("/v3/api-docs") ||
                 requestURI.equals("/swagger-ui.html") ||
                 requestURI.startsWith("/swagger-resources/") ||
                 requestURI.startsWith("/api/backend/auth/");
@@ -55,26 +56,38 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // 토큰이 있을 때만 인증 처리
         if (token != null && !token.trim().isEmpty()) {
             try {
-                // JWT 토큰 검증 및 사용자 ID 추출
-                if (jwtTokenProvider.isInvalidToken(token)) {
-                    Long userId = jwtTokenProvider.getUserIdFromToken(token);
-
-                    // 인증 객체 생성 및 SecurityContext에 설정
-                    Authentication authentication = new UsernamePasswordAuthenticationToken(
-                            userId,
-                            null,
-                            Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
-                    );
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                if (!jwtTokenProvider.isValidToken(token)) {
+                    writeForbiddenResponse(response, "만료된 access token입니다.");
+                    return;
                 }
+
+                Long userId = jwtTokenProvider.getUserIdFromToken(token);
+
+                Authentication authentication = new UsernamePasswordAuthenticationToken(
+                        userId,
+                        null,
+                        Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
+                );
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+
             } catch (Exception e) {
-                // JWT 파싱 실패시 로그만 남기고 계속 진행
                 System.out.println("JWT parsing failed: " + e.getMessage());
-                // 인증 실패해도 필터 체인은 계속 진행
+                writeForbiddenResponse(response, "토큰 인증에 실패했습니다: " + e.getMessage());
+                return;
             }
         }
 
         // 다음 필터로 진행
         filterChain.doFilter(request, response);
+    }
+
+
+    private void writeForbiddenResponse(HttpServletResponse response, String message) throws IOException {
+        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+        response.setContentType("application/json;charset=UTF-8");
+
+        // 원하는 포맷에 맞춰 응답 JSON 작성 (예: ApiResponse 스타일)
+        String json = String.format("{\"code\":\"FORBIDDEN\",\"message\":\"%s\"}", message);
+        response.getWriter().write(json);
     }
 }

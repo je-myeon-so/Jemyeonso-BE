@@ -113,7 +113,7 @@ public class AuthService {
                 throw new UnauthorizedException("유효하지 않은 access 토큰입니다.");
             }
 
-            if (!jwtTokenProvider.isInvalidToken(accessToken)) {
+            if (!jwtTokenProvider.isValidToken(accessToken)) {
                 throw new UnauthorizedException("잘못된 access 토큰입니다.");
             }
 
@@ -142,15 +142,19 @@ public class AuthService {
     public void refreshAccessToken(HttpServletRequest request, HttpServletResponse response) {
         String refreshToken = extractTokenFromCookies(request);
 
-        if (!jwtTokenProvider.isInvalidToken(refreshToken)) {
+        if (!jwtTokenProvider.isValidToken(refreshToken)) {
             throw new UnauthorizedException("유효하지 않은 리프레시 토큰입니다.");
         }
 
         Long userId = jwtTokenProvider.getUserIdFromToken(refreshToken);
+
+        System.out.println("userId: " + userId);
+
         Optional<Oauth> oauthOpt = Optional.ofNullable(authRepository.findByUserId(userId)
             .orElseThrow(() -> new UnauthorizedException("OAuth 정보가 존재하지 않습니다.")));
 
         User user = oauthOpt.get().getUser();
+
         String newAccessToken = jwtTokenProvider.createAccessToken(user);
         String newRefreshToken = jwtTokenProvider.createRefreshToken(user);
 
