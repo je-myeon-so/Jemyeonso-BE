@@ -11,6 +11,7 @@ public class QuestionRequestDto {
     private String jobType;
     private String questionCategory;
     private String previousQuestion;
+    private Long previousQuestionId;
     private String previousAnswer;
     private Long documentId;
 }

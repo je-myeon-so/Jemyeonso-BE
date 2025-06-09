@@ -30,7 +30,6 @@ public class Oauth {
 
     @OneToOne(fetch = FetchType.LAZY)
     @MapsId
-
     @JoinColumn(name = "id")
     private User user;
 

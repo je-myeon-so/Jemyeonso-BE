@@ -17,6 +17,7 @@ public class AiQuestionResponseDto {
     @AllArgsConstructor
     public static class AiQuestionData {
         private String question;
+        private Long questionId;
         private String questionType;
     }
 }

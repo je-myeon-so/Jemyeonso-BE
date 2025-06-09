@@ -42,6 +42,11 @@ public class AiQuestionService {
                 .build();
         questionRepository.save(question);
 
+        AiQuestionResponseDto.AiQuestionData updatedData = aiResponse.getData();
+        updatedData.setQuestionId(question.getId());
+
+        aiResponse.setData(updatedData); // 필요 시 생략 가능
+
         // 그대로 리턴
         return aiResponse;
     }

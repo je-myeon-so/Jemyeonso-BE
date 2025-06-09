@@ -58,7 +58,7 @@ public class InterviewService {
 
         AiQuestionResponseDto aiQuestionResponseDto = aiQuestionService.requestAndSaveQuestion(interview.getId(), aiRequest);
 
-        return new InterviewResponseDto(interview.getId(), aiQuestionResponseDto.getData().getQuestion(), aiQuestionResponseDto.getData().getQuestionType());
+        return new InterviewResponseDto(interview.getId(), aiQuestionResponseDto.getData().getQuestion(), aiQuestionResponseDto.getData().getQuestionId(), aiQuestionResponseDto.getData().getQuestionType());
     }
 
     @Transactional
@@ -71,6 +71,16 @@ public class InterviewService {
             throw new InterviewAccessDeniedException("해당 면접에 접근할 권한이 없습니다.");
         }
 
+        // 답변 저장
+        Answer answer = Answer.builder()
+                .answerTime(null)
+                .content(requestDto.getPreviousAnswer())
+                .questionId(requestDto.getPreviousQuestionId())
+                .score(null)
+                .build();
+
+        answerRepository.save(answer);
+
         // AI 요청 구성
         AiQuestionRequestDto aiRequest = new AiQuestionRequestDto(
                 interview.getQuestionLevel().name(),
@@ -82,7 +92,7 @@ public class InterviewService {
         );
 
         AiQuestionResponseDto aiQuestionResponseDto = aiQuestionService.requestAndSaveQuestion(interview.getId(), aiRequest);
-        return new InterviewResponseDto(interview.getId(), aiQuestionResponseDto.getData().getQuestion(), aiQuestionResponseDto.getData().getQuestionType());
+        return new InterviewResponseDto(interview.getId(), aiQuestionResponseDto.getData().getQuestion(), aiQuestionResponseDto.getData().getQuestionId(), aiQuestionResponseDto.getData().getQuestionType());
     }
 
     public InterviewRepositoryResponse getInterviewRepository(int page, int size, Long userId) {
@@ -115,7 +125,7 @@ public class InterviewService {
         );
 
         AiQuestionResponseDto aiQuestionResponseDto = aiQuestionService.requestAndSaveQuestion(interview.getId(), aiRequest);
-        return new InterviewResponseDto(interview.getId(), aiQuestionResponseDto.getData().getQuestion(), aiQuestionResponseDto.getData().getQuestionType());
+        return new InterviewResponseDto(interview.getId(), aiQuestionResponseDto.getData().getQuestion(), aiQuestionResponseDto.getData().getQuestionId(), aiQuestionResponseDto.getData().getQuestionType());
     }
 
     public InterviewRepositoryResponse getInterviewRepository(int page, int size) {
