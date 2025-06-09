@@ -21,7 +21,7 @@ public class AiQuestionService {
     public AiQuestionResponseDto requestAndSaveQuestion(Long interviewId,
         AiQuestionRequestDto request) {
         AiQuestionResponseDto aiResponse = aiWebClient.post()
-            .uri("/api/questions")
+            .uri("/api/ai/questions")
             .bodyValue(request)
             .retrieve()
             .bodyToMono(AiQuestionResponseDto.class)
@@ -42,7 +42,7 @@ public class AiQuestionService {
                 .build();
         questionRepository.save(question);
 
-        // 그대로 리턴 (questionType은 DB 저장하지 않음)
+        // 그대로 리턴
         return aiResponse;
     }
 }
