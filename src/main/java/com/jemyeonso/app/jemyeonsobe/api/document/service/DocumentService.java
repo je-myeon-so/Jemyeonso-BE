@@ -1,5 +1,6 @@
 package com.jemyeonso.app.jemyeonsobe.api.document.service;
 
+import com.jemyeonso.app.jemyeonsobe.api.document.dto.DocumentRepositoryResponse;
 import com.jemyeonso.app.jemyeonsobe.api.document.dto.DocumentResponse;
 import com.jemyeonso.app.jemyeonsobe.api.document.dto.FileUploadResponseDto;
 import com.jemyeonso.app.jemyeonsobe.api.document.entity.Document;
@@ -7,13 +8,10 @@ import com.jemyeonso.app.jemyeonsobe.api.document.repository.DocumentRepository;
 import com.jemyeonso.app.jemyeonsobe.common.exception.DocumentAccessDeniedException;
 import com.jemyeonso.app.jemyeonsobe.common.exception.DocumentNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -55,15 +53,24 @@ public class DocumentService {
         documentRepository.delete(document);
     }
 
-    public List<DocumentResponse> getDocumentsList(int page, int size, Long userId) {
+    public DocumentRepositoryResponse getDocumentsList(int page, int size, Long userId) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
         // 현재 로그인한 유저의 문서만 조회
         Page<Document> documentPage = documentRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
 
-        return documentPage.getContent().stream()
+        List<DocumentResponse> documents = documentPage.getContent().stream()
                 .map(DocumentResponse::from)
                 .collect(Collectors.toList());
+
+        // Page<DocumentResponse> 형태로 변환하여 from 메서드 사용
+        Page<DocumentResponse> documentResponsePage = new PageImpl<>(
+                documents,
+                pageable,
+                documentPage.getTotalElements()
+        );
+
+        return DocumentRepositoryResponse.from(documentResponsePage);
     }
 
     // 기존 메서드들 (하위 호환성을 위해 유지)
