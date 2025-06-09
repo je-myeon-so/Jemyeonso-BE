@@ -13,10 +13,7 @@ import com.jemyeonso.app.jemyeonsobe.api.interviews.service.ai.AiQuestionService
 import com.jemyeonso.app.jemyeonsobe.common.exception.ResourceNotFoundException;
 import com.jemyeonso.app.jemyeonsobe.common.exception.InterviewAccessDeniedException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -85,17 +82,21 @@ public class InterviewService {
         return new InterviewResponseDto(interview.getId(), aiQuestionResponseDto.getData().getQuestion(), aiQuestionResponseDto.getData().getQuestionType());
     }
 
-    public InterviewRepositoryResponse getInterviewRepository(int page, int size, Long userId) {
+    public InterviewRepositoryResponse getInterviewRepository(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-
-        // 현재 로그인한 유저의 면접만 조회
-        Page<Interview> interviewPage = interviewRepository.findByUserIdWithDocument(userId, pageable);
+        Page<Interview> interviewPage = interviewRepository.findAllWithDocument(pageable);
 
         List<InterviewListResponse> interviews = interviewPage.getContent().stream()
                 .map(InterviewListResponse::from)
                 .collect(Collectors.toList());
 
-        return new InterviewRepositoryResponse(interviews);
+        Page<InterviewListResponse> interviewResponsePage = new PageImpl<>(
+                interviews,
+                pageable,
+                interviewPage.getTotalElements()
+        );
+
+        return InterviewRepositoryResponse.from(interviewResponsePage);
     }
 
     // 기존 메서드들 (하위 호환성을 위해 유지)
@@ -118,15 +119,24 @@ public class InterviewService {
         return new InterviewResponseDto(interview.getId(), aiQuestionResponseDto.getData().getQuestion(), aiQuestionResponseDto.getData().getQuestionType());
     }
 
-    public InterviewRepositoryResponse getInterviewRepository(int page, int size) {
+    public InterviewRepositoryResponse getInterviewRepository(int page, int size, Long userId) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        Page<Interview> interviewPage = interviewRepository.findAllWithDocument(pageable);
+
+        // 현재 로그인한 유저의 면접만 조회
+        Page<Interview> interviewPage = interviewRepository.findByUserIdWithDocument(userId, pageable);
 
         List<InterviewListResponse> interviews = interviewPage.getContent().stream()
                 .map(InterviewListResponse::from)
                 .collect(Collectors.toList());
 
-        return new InterviewRepositoryResponse(interviews);
+        // Page<InterviewListResponse> 형태로 변환하여 from 메서드 사용
+        Page<InterviewListResponse> interviewResponsePage = new PageImpl<>(
+                interviews,
+                pageable,
+                interviewPage.getTotalElements()
+        );
+
+        return InterviewRepositoryResponse.from(interviewResponsePage);
     }
 
     public InterviewQuestionsResponseDto getInterviewQuestions(Long interviewId, Long userId) {
