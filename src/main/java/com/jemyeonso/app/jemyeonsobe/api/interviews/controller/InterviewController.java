@@ -5,6 +5,7 @@ import com.jemyeonso.app.jemyeonsobe.api.interviews.repository.QuestionRepositor
 import com.jemyeonso.app.jemyeonsobe.common.enums.ApiResponse;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.service.InterviewService;
 import com.jemyeonso.app.jemyeonsobe.common.enums.ApiResponseCode;
+import com.jemyeonso.app.jemyeonsobe.util.SecurityUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -13,7 +14,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -41,7 +41,7 @@ public class InterviewController {
     })
     @PostMapping
     public ResponseEntity<?> createInterview(@RequestBody InterviewRequestDto requestDto) {
-        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long userId = SecurityUtil.getCurrentUserId();
 
         InterviewResponseDto interviewResponseDto = interviewService.createInterview(userId, requestDto);
         return ResponseEntity.ok(
@@ -63,7 +63,7 @@ public class InterviewController {
     })
     @PostMapping("/questions")
     public ResponseEntity<?> createQuestion(@RequestBody QuestionRequestDto requestDto) {
-        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long userId = SecurityUtil.getCurrentUserId();
 
         InterviewResponseDto responseDto = interviewService.createQuestion(requestDto, userId);
 
@@ -86,7 +86,8 @@ public class InterviewController {
         }
 
         // 현재 로그인한 유저 ID 추출
-        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long userId = SecurityUtil.getCurrentUserId();
+
 
         try {
             InterviewRepositoryResponse response = interviewService.getInterviewRepository(page, size, userId);
@@ -112,7 +113,7 @@ public class InterviewController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한 없음")
     })
     public ResponseEntity<?> getInterviewQuestions(@PathVariable Long interviewId) {
-        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long userId = SecurityUtil.getCurrentUserId();
 
         InterviewQuestionsResponseDto responseDto = interviewService.getInterviewQuestions(interviewId, userId);
 
@@ -139,7 +140,7 @@ public class InterviewController {
             @PathVariable Long interviewId,
             @PathVariable Long questionId
     ) {
-        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long userId = SecurityUtil.getCurrentUserId();
 
         QuestionDetailResponseDto responseDto = interviewService.getQuestionDetail(interviewId, questionId, userId);
 

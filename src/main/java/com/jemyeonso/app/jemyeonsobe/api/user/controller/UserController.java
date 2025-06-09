@@ -5,6 +5,7 @@ import com.jemyeonso.app.jemyeonsobe.api.user.dto.UserInfoResponseDto;
 import com.jemyeonso.app.jemyeonsobe.api.user.service.UserService;
 import com.jemyeonso.app.jemyeonsobe.common.enums.ApiResponseCode;
 import com.jemyeonso.app.jemyeonsobe.common.exception.ApiResponse;
+import com.jemyeonso.app.jemyeonsobe.util.SecurityUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -32,7 +33,7 @@ public class UserController {
     @GetMapping("/me")
     @Operation(summary = "유저 정보 조회", description = "현재 로그인한 사용자의 정보를 조회합니다.")
     public ResponseEntity<?> getUserInfo() {
-        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long userId = SecurityUtil.getCurrentUserId();
 
         UserInfoResponseDto userInfoResponseDto = userService.getUserInfo(userId);
         return ResponseEntity.ok(ApiResponse.success(ApiResponseCode.SUCCESS, "유저 정보 조회에 성공하였습니다.", userInfoResponseDto));
@@ -48,7 +49,7 @@ public class UserController {
     public ResponseEntity<?> patchUserInfo(
         @Parameter(description = "수정할 유저 정보 (닉네임, 프로필 이미지, 한줄 소개)")
         @RequestBody UserInfoRequestDto userInfoRequestDto) {
-        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long userId = SecurityUtil.getCurrentUserId();
 
         String nickname = userInfoRequestDto.getNickname();
         String profileImgUrl = userInfoRequestDto.getProfileImgUrl();

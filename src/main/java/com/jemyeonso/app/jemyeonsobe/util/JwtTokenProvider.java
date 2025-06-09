@@ -64,20 +64,24 @@ public class JwtTokenProvider {
      * @param token
      * @return
      */
-    public boolean isInvalidToken(String token) {
+
+    public boolean isValidToken(String token) {
         try {
-            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
+            Jwts.parserBuilder()
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(token);
             return true;
         } catch (ExpiredJwtException e) {
-            log.error("Expired JWT Exception [Err_Msg]: {}", e.getMessage());
-            throw e;
+            log.warn("Expired JWT: {}", e.getMessage());
         } catch (JwtException e) {
-            log.error("JWT Exception [Err_Msg]: {}", e.getMessage());
+            log.warn("Invalid JWT: {}", e.getMessage());
         } catch (Exception e) {
-            log.error("Other Exception [Err_Msg]: {}", e.getMessage());
+            log.warn("Unknown error parsing JWT: {}", e.getMessage());
         }
         return false;
     }
+
 
     /**
      * 토큰에서부터 userId 추출

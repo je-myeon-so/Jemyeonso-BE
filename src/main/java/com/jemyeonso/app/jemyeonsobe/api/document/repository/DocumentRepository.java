@@ -8,8 +8,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface DocumentRepository extends JpaRepository<Document, Long> {
+
+    Optional<Document> findByIdAndDeletedAtIsNull(Long documentId);
 
     // 특정 유저의 문서만 조회 (생성일 기준 내림차순)
     @Query("SELECT d FROM Document d WHERE d.userId = :userId ORDER BY d.createdAt DESC")

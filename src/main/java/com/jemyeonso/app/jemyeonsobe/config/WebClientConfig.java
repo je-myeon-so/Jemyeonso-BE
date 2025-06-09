@@ -14,11 +14,21 @@ public class WebClientConfig {
     @Value("${KAKAO_ADMIN_KEY}")
     private String adminKey;
 
+    @Value("${AI_API_BASE_URL}")
+    private String aiApiBaseUrl;
+
+    @Value("${KAKAO_AUTH_BASE_URL}")
+    private String kakaoAuthBaseUrl;
+
+    @Value("${KAKAO_API_BASE_URL}")
+    private String kakaoApiBaseUrl;
+
+
     // OAuth 인증용 (토큰 발급용)
     @Bean
     public WebClient kakaoAuthClient() {
         return WebClient.builder()
-            .baseUrl("https://kauth.kakao.com")
+            .baseUrl(kakaoAuthBaseUrl)
             .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE)
             .build();
     }
@@ -27,7 +37,7 @@ public class WebClientConfig {
     @Bean
     public WebClient kakaoApiClient() {
         return WebClient.builder()
-            .baseUrl("https://kapi.kakao.com")
+            .baseUrl(kakaoApiBaseUrl)
             .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE)
             .defaultHeader(HttpHeaders.AUTHORIZATION, "KakaoAK " + adminKey)
             .build();
@@ -37,7 +47,7 @@ public class WebClientConfig {
     @Qualifier("aiWebClient")
     public WebClient aiWebClient() {
         return WebClient.builder()
-                .baseUrl("http://172.20.5.180:8000")     // 도커 컨테이너 네트워크 이름
+                .baseUrl(aiApiBaseUrl)
                 .build();
     }
 }

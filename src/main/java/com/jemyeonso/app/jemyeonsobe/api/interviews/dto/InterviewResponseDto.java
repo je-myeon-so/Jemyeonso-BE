@@ -10,5 +10,6 @@ import lombok.Getter;
 public class InterviewResponseDto {
     private Long interviewId;
     private String question;
+    private Long questionId;
     private String questionType;
 }
