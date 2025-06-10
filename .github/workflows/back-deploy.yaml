@@ -86,7 +86,7 @@ jobs:
               docker pull \$FULL_IMAGE
 
               echo "[INFO] Setting executable permission for deploy.sh..."
-              chmod +x /home/ubuntu/deploy/scripts/deploy.sh
+              sudo chmod +x /home/ubuntu/deploy/scripts/deploy.sh
 
               echo "[INFO] Running deploy script..."
               bash /home/ubuntu/deploy/scripts/deploy.sh
