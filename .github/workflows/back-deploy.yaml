@@ -56,13 +56,13 @@ jobs:
 
       - name: Build Docker image (tagged with $IMAGE_TAG and latest)
         run: |
-          docker build -t $ECR_BASE/$ECR_REPO/spring-app:$IMAGE_TAG .
-          docker tag $ECR_BASE/$ECR_REPO/spring-app:$IMAGE_TAG $ECR_BASE/$ECR_REPO/spring-app:latest
+          docker build -t $ECR_BASE/$ECR_REPO:$IMAGE_TAG .
+          docker tag $ECR_BASE/$ECR_REPO:$IMAGE_TAG $ECR_BASE/$ECR_REPO:spring-latest
 
       - name: Push Docker image to ECR (both tags)
         run: |
-          docker push $ECR_BASE/$ECR_REPO/spring-app:$IMAGE_TAG
-          docker push $ECR_BASE/$ECR_REPO/spring-app:latest
+          docker push $ECR_BASE/$ECR_REPO:$IMAGE_TAG
+          docker push $ECR_BASE/$ECR_REPO:spring-latest
 
       - name: Save SSH Key
         run: |
@@ -77,7 +77,7 @@ jobs:
               export ECR_BASE=${{ env.ECR_BASE }}
               export ECR_REPO=${{ env.ECR_REPO }}
               export IMAGE_TAG=${{ env.IMAGE_TAG }}
-              export FULL_IMAGE="$ECR_BASE/$ECR_REPO/spring-app:latest"
+              export FULL_IMAGE="$ECR_BASE/$ECR_REPO:spring-latest"
 
               echo "[INFO] Logging in to ECR..."
               aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_BASE
