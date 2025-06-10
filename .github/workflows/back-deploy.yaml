@@ -15,7 +15,7 @@ env:
   AWS_REGION: ap-northeast-2
   ECR_BASE: ${{ secrets.ECR_BASE }}
   ECR_REPO: ${{ secrets.ECR_REPO }}
-  IMAGE_TAG: ${{ github.event.inputs.image_tag }}
+  IMAGE_TAG: ${{ github.event.inputs.image_tag || github.sha }}
   SSH_KEY_PATH: sophie-keypair.pem
 
 jobs:
