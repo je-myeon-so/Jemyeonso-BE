@@ -7,8 +7,9 @@ import com.jemyeonso.app.jemyeonsobe.api.interviews.entity.Question;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.repository.AnswerRepository;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.repository.InterviewRepository;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.repository.QuestionRepository;
-import com.jemyeonso.app.jemyeonsobe.api.interviews.service.ai.AiQuestionRequestDto;
-import com.jemyeonso.app.jemyeonsobe.api.interviews.service.ai.AiQuestionResponseDto;
+import com.jemyeonso.app.jemyeonsobe.api.interviews.service.ai.AiAnalysisService;
+import com.jemyeonso.app.jemyeonsobe.api.interviews.service.ai.dto.AiQuestionRequestDto;
+import com.jemyeonso.app.jemyeonsobe.api.interviews.service.ai.dto.AiQuestionResponseDto;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.service.ai.AiQuestionService;
 import com.jemyeonso.app.jemyeonsobe.common.exception.ResourceNotFoundException;
 import com.jemyeonso.app.jemyeonsobe.common.exception.InterviewAccessDeniedException;
@@ -29,6 +30,7 @@ public class InterviewService {
     private final InterviewRepository interviewRepository;
     private final QuestionRepository questionRepository;
     private final AiQuestionService aiQuestionService;
+    private final AiAnalysisService aiAnalysisService;
     private final AnswerRepository answerRepository;
 
     @Transactional
@@ -77,6 +79,8 @@ public class InterviewService {
                 .build();
 
         answerRepository.save(answer);
+
+        aiAnalysisService.analyzeAnswerAsync(answer, interview, requestDto.getPreviousQuestion());
 
         // AI 요청 구성
         AiQuestionRequestDto aiRequest = new AiQuestionRequestDto(
