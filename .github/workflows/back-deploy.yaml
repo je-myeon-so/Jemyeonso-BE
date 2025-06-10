@@ -34,8 +34,8 @@ jobs:
 
       - name: Create application.properties
         run: |
-          echo "${{ secrets.ENV }}" > ./src/main/resources/.env
           mkdir -p ./src/main/resources
+          echo "${{ secrets.ENV }}" > ./src/main/resources/.env
           echo "${{ secrets.APPLICATION_PROPERTIES }}" > ./src/main/resources/application.properties
 
       - name: Grant execute permission for gradlew
