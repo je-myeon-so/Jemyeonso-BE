@@ -72,7 +72,7 @@ jobs:
       - name: SSH to OpenVPN and deploy Spring Boot
         run: |
           ssh -i $SSH_KEY_PATH -o StrictHostKeyChecking=no openvpnas@${{ secrets.OPENVPN_HOST }} << EOF
-            ssh -i $SSH_KEY_PATH -o StrictHostKeyChecking=no ubuntu@${{ secrets.WEB_PRIVATE_IP }} << 'INNER_EOF'
+            ssh -i $SSH_KEY_PATH -o StrictHostKeyChecking=no ubuntu@${{ secrets.WEB_PRIVATE_IP }} '
               export AWS_REGION=${{ env.AWS_REGION }}
               export ECR_BASE=${{ env.ECR_BASE }}
               export ECR_REPO=${{ env.ECR_REPO }}
@@ -86,9 +86,9 @@ jobs:
               docker pull \$FULL_IMAGE
 
               echo "[INFO] Setting executable permission for deploy.sh..."
-              sudo chmod +x /home/ubuntu/deploy/scripts/deploy.sh
+              chmod +x /home/ubuntu/deploy/scripts/deploy.sh
 
               echo "[INFO] Running deploy script..."
               bash /home/ubuntu/deploy/scripts/deploy.sh
-            INNER_EOF
+            '
           EOF
