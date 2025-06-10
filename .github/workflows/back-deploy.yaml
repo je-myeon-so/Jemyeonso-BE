@@ -19,7 +19,7 @@ env:
   SSH_KEY_PATH: sophie-keypair.pem
 
 jobs:
-  deploy:
+  build-deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -34,6 +34,7 @@ jobs:
 
       - name: Create application.properties
         run: |
+          echo "${{ secrets.ENV }}" > ./.env
           mkdir -p ./src/main/resources
           echo "${{ secrets.APPLICATION_PROPERTIES }}" > ./src/main/resources/application.properties
 
