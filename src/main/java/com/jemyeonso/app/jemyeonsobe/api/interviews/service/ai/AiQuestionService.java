@@ -2,6 +2,8 @@ package com.jemyeonso.app.jemyeonsobe.api.interviews.service.ai;
 
 import com.jemyeonso.app.jemyeonsobe.api.interviews.entity.Question;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.repository.QuestionRepository;
+import com.jemyeonso.app.jemyeonsobe.api.interviews.service.ai.dto.AiQuestionRequestDto;
+import com.jemyeonso.app.jemyeonsobe.api.interviews.service.ai.dto.AiQuestionResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;

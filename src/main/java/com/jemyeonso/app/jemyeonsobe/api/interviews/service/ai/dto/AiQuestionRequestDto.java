@@ -1,4 +1,4 @@
-package com.jemyeonso.app.jemyeonsobe.api.interviews.service.ai;
+package com.jemyeonso.app.jemyeonsobe.api.interviews.service.ai.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
