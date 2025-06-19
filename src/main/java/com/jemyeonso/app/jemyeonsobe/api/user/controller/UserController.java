@@ -1,5 +1,6 @@
 package com.jemyeonso.app.jemyeonsobe.api.user.controller;
 
+import com.jemyeonso.app.jemyeonsobe.api.user.dto.UserFeedbackResponseDto;
 import com.jemyeonso.app.jemyeonsobe.api.user.dto.UserInfoRequestDto;
 import com.jemyeonso.app.jemyeonsobe.api.user.dto.UserInfoResponseDto;
 import com.jemyeonso.app.jemyeonsobe.api.user.service.UserService;
@@ -9,6 +10,7 @@ import com.jemyeonso.app.jemyeonsobe.util.SecurityUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,7 +37,8 @@ public class UserController {
         Long userId = SecurityUtil.getCurrentUserId();
 
         UserInfoResponseDto userInfoResponseDto = userService.getUserInfo(userId);
-        return ResponseEntity.ok(ApiResponse.success(ApiResponseCode.SUCCESS, "유저 정보 조회에 성공하였습니다.", userInfoResponseDto));
+
+        return ResponseEntity.ok(ApiResponse.success(ApiResponseCode.USER_INFO_GET_SUCCESS, "유저 정보 조회에 성공하였습니다.", userInfoResponseDto));
     }
 
     /**
@@ -54,9 +57,18 @@ public class UserController {
         String profileImgUrl = userInfoRequestDto.getProfileImgUrl();
         String comment = userInfoRequestDto.getComment();
 
-        UserInfoResponseDto userInfoResponseDto = userService.patchUserInfo(userId, nickname, profileImgUrl, comment);
+        UserInfoResponseDto responseDto = userService.patchUserInfo(userId, nickname, profileImgUrl, comment);
 
-        return ResponseEntity.ok(ApiResponse.success(ApiResponseCode.SUCCESS, "유저 정보 수정에 성공하였습니다.", userInfoResponseDto));
+        return ResponseEntity.ok(ApiResponse.success(ApiResponseCode.USER_INFO_EDIT_SUCCESS, "유저 정보 수정에 성공하였습니다.", responseDto));
     }
 
+    @GetMapping("/me/improvement")
+    @Operation(summary = "유저 개선점 조회", description = "현재 로그인한 사용자의 개선점을 조회합니다.")
+    public ResponseEntity<?> getImprovement() {
+        Long userId = SecurityUtil.getCurrentUserId();
+
+        UserFeedbackResponseDto responseDto = userService.getImprovement(userId);
+
+        return ResponseEntity.ok(ApiResponse.success(ApiResponseCode.USER_IMPROVEMENT_GET_SUCCESS, "개선점 조회에 성공하였습니다.", responseDto));
+    }
 }

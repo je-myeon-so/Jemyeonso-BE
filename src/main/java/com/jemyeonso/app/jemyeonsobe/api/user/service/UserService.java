@@ -1,5 +1,6 @@
 package com.jemyeonso.app.jemyeonsobe.api.user.service;
 
+import com.jemyeonso.app.jemyeonsobe.api.user.dto.UserFeedbackResponseDto;
 import com.jemyeonso.app.jemyeonsobe.api.user.dto.UserInfoResponseDto;
 import com.jemyeonso.app.jemyeonsobe.api.user.entity.User;
 import com.jemyeonso.app.jemyeonsobe.api.user.repository.UserRepository;
@@ -46,6 +47,17 @@ public class UserService {
             .nickname(user.getNickname())
             .email(user.getEmail())
             .comment(user.getComment())
+            .build();
+    }
+
+    public UserFeedbackResponseDto getImprovement(Long userId) {
+        // 유저 찾기
+        User user = userRepository.findByIdAndDeletedAtIsNull(userId)
+            .orElseThrow(()->new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
+
+        return UserFeedbackResponseDto.builder()
+            .userId(user.getId())
+            .feedback(user.getImprovement())
             .build();
     }
 }
