@@ -11,6 +11,7 @@ import com.jemyeonso.app.jemyeonsobe.api.interviews.service.ai.AiAnalysisService
 import com.jemyeonso.app.jemyeonsobe.api.interviews.service.ai.dto.AiQuestionRequestDto;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.service.ai.dto.AiQuestionResponseDto;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.service.ai.AiQuestionService;
+import com.jemyeonso.app.jemyeonsobe.common.enums.ErrorMessage;
 import com.jemyeonso.app.jemyeonsobe.common.exception.ResourceNotFoundException;
 import com.jemyeonso.app.jemyeonsobe.common.exception.InterviewAccessDeniedException;
 import lombok.RequiredArgsConstructor;
@@ -63,11 +64,11 @@ public class InterviewService {
     @Transactional
     public InterviewResponseDto createQuestion(QuestionRequestDto requestDto, Long userId) {
         Interview interview = interviewRepository.findById(requestDto.getInterviewId())
-                .orElseThrow(() -> new ResourceNotFoundException("해당 인터뷰가 존재하지 않습니다."));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.INTERVIEW_NOT_FOUND));
 
         // 유저 검증: 면접 소유자와 요청한 유저가 다르면 접근 거부
         if (!interview.getUserId().equals(userId)) {
-            throw new InterviewAccessDeniedException("해당 면접에 접근할 권한이 없습니다.");
+            throw new InterviewAccessDeniedException(ErrorMessage.NO_INTERVIEW_PERMISSION);
         }
 
         // 답변 저장
@@ -117,7 +118,7 @@ public class InterviewService {
     @Transactional
     public InterviewResponseDto createQuestion(QuestionRequestDto requestDto) {
         Interview interview = interviewRepository.findById(requestDto.getInterviewId())
-                .orElseThrow(() -> new ResourceNotFoundException("해당 인터뷰가 존재하지 않습니다."));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.INTERVIEW_NOT_FOUND));
 
         // AI 요청 구성
         AiQuestionRequestDto aiRequest = new AiQuestionRequestDto(
@@ -156,11 +157,11 @@ public class InterviewService {
     public InterviewQuestionsResponseDto getInterviewQuestions(Long interviewId, Long userId) {
         // 면접 존재 여부 확인 - 기존 ResourceNotFoundException 활용
         Interview interview = interviewRepository.findById(interviewId)
-                .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 면접입니다."));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.INTERVIEW_NOT_FOUND));
 
         // 권한 확인 - 기존 InterviewAccessDeniedException 활용
         if (!interview.getUserId().equals(userId)) {
-            throw new InterviewAccessDeniedException("해당 면접에 접근할 권한이 없습니다.");
+            throw new InterviewAccessDeniedException(ErrorMessage.NO_INTERVIEW_PERMISSION);
         }
 
         // 질문 목록 조회
@@ -192,15 +193,15 @@ public class InterviewService {
     public QuestionDetailResponseDto getQuestionDetail(Long interviewId, Long questionId, Long userId) {
         // 면접 존재 여부 및 권한 확인
         Interview interview = interviewRepository.findById(interviewId)
-                .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 면접입니다."));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.INTERVIEW_NOT_FOUND));
 
         if (!interview.getUserId().equals(userId)) {
-            throw new InterviewAccessDeniedException("해당 면접에 접근할 권한이 없습니다.");
+            throw new InterviewAccessDeniedException(ErrorMessage.NO_INTERVIEW_PERMISSION);
         }
 
         // 질문 존재 여부 및 면접 소속 확인
         Question question = questionRepository.findByIdAndInterviewId(questionId, interviewId)
-                .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 질문입니다."));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.QUESTION_NOT_FOUND));
 
         // 답변 조회 (피드백과 함께)
         Optional<Answer> answerOpt = answerRepository.findByQuestionIdWithFeedbacks(questionId);

@@ -1,6 +1,5 @@
 package com.jemyeonso.app.jemyeonsobe.api.auth.controller;
 
-import com.jemyeonso.app.jemyeonsobe.api.auth.dto.AuthResponseDto;
 import com.jemyeonso.app.jemyeonsobe.api.auth.service.AuthService;
 import com.jemyeonso.app.jemyeonsobe.common.enums.ApiResponseCode;
 import com.jemyeonso.app.jemyeonsobe.common.exception.ApiResponse;

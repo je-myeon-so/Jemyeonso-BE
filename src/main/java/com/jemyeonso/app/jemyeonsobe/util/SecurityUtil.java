@@ -1,5 +1,6 @@
 package com.jemyeonso.app.jemyeonsobe.util;
 
+import com.jemyeonso.app.jemyeonsobe.common.enums.ErrorMessage;
 import com.jemyeonso.app.jemyeonsobe.common.exception.ForbiddenException;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -10,12 +11,12 @@ public class SecurityUtil {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
         if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken) {
-            throw new ForbiddenException("로그인이 필요합니다.");
+            throw new ForbiddenException(ErrorMessage.LOGIN_REQUIRED);
         }
 
         Object principal = auth.getPrincipal();
         if (!(principal instanceof Long)) {
-            throw new ForbiddenException("잘못된 사용자 정보입니다.");
+            throw new ForbiddenException(ErrorMessage.INVALID_USER_INFO);
         }
 
         return (Long) principal;

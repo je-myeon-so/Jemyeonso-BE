@@ -1,8 +1,10 @@
 package com.jemyeonso.app.jemyeonsobe.api.user.service;
 
+import com.jemyeonso.app.jemyeonsobe.api.user.dto.UserFeedbackResponseDto;
 import com.jemyeonso.app.jemyeonsobe.api.user.dto.UserInfoResponseDto;
 import com.jemyeonso.app.jemyeonsobe.api.user.entity.User;
 import com.jemyeonso.app.jemyeonsobe.api.user.repository.UserRepository;
+import com.jemyeonso.app.jemyeonsobe.common.enums.ErrorMessage;
 import com.jemyeonso.app.jemyeonsobe.common.exception.ResourceNotFoundException;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +20,7 @@ public class UserService {
     @Transactional(readOnly = true)
     public UserInfoResponseDto getUserInfo(Long userId) {
         User user = userRepository.findByIdAndDeletedAtIsNull(userId)
-            .orElseThrow(()->new ResourceNotFoundException("유저를 찾을 수 없습니다"));
+            .orElseThrow(()->new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
 
         return UserInfoResponseDto.builder()
             .userId(user.getId())
@@ -32,7 +34,7 @@ public class UserService {
 
     public UserInfoResponseDto patchUserInfo(Long userId, String nickname, String profileImgUrl, String comment) {
         User user = userRepository.findByIdAndDeletedAtIsNull(userId)
-            .orElseThrow(()->new ResourceNotFoundException("유저를 찾을 수 없습니다"));
+            .orElseThrow(()->new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
 
         if (nickname != null) user.setNickname(nickname);
         if (profileImgUrl != null) user.setProfileImgUrl(profileImgUrl);
@@ -45,6 +47,17 @@ public class UserService {
             .nickname(user.getNickname())
             .email(user.getEmail())
             .comment(user.getComment())
+            .build();
+    }
+
+    public UserFeedbackResponseDto getImprovement(Long userId) {
+        // 유저 찾기
+        User user = userRepository.findByIdAndDeletedAtIsNull(userId)
+            .orElseThrow(()->new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
+
+        return UserFeedbackResponseDto.builder()
+            .userId(user.getId())
+            .feedback(user.getImprovement())
             .build();
     }
 }

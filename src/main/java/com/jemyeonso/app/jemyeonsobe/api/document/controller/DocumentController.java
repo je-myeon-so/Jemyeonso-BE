@@ -3,7 +3,6 @@ package com.jemyeonso.app.jemyeonsobe.api.document.controller;
 import com.jemyeonso.app.jemyeonsobe.api.document.dto.DocumentRepositoryResponse;
 import com.jemyeonso.app.jemyeonsobe.api.document.dto.DocumentResponse;
 import com.jemyeonso.app.jemyeonsobe.api.document.dto.ApiResponse;
-import com.jemyeonso.app.jemyeonsobe.common.enums.*;
 import com.jemyeonso.app.jemyeonsobe.api.document.service.DocumentService;
 import com.jemyeonso.app.jemyeonsobe.common.exception.DocumentAccessDeniedException;
 import com.jemyeonso.app.jemyeonsobe.common.exception.DocumentNotFoundException;
@@ -13,12 +12,9 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import com.jemyeonso.app.jemyeonsobe.api.document.dto.FileUploadResponseDto;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/backend/file")
