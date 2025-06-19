@@ -8,6 +8,7 @@ import com.jemyeonso.app.jemyeonsobe.api.user.repository.UserRepository;
 import com.jemyeonso.app.jemyeonsobe.common.enums.ErrorMessage;
 import com.jemyeonso.app.jemyeonsobe.common.exception.UnauthorizedException;
 import com.jemyeonso.app.jemyeonsobe.util.JwtTokenProvider;
+import com.jemyeonso.app.jemyeonsobe.util.CookieUtil;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,6 +27,7 @@ public class AuthService {
     private final AuthRepository authRepository;
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
+    private final CookieUtil cookieUtil;
 
     public void loginWithKakao(String code, HttpServletResponse response) {
         KakaoUserResponseDto kakaouser;
@@ -63,7 +65,7 @@ public class AuthService {
 
                 authRepository.updateRefreshToken(existingUser.getId(), refreshToken);
 
-                addTokenCookies(response, accessToken, refreshToken);
+                cookieUtil.addTokenCookies(response, accessToken, refreshToken);
             } catch (Exception e) {
                 log.error("기존 사용자 토큰 발급 실패", e);
                 throw new RuntimeException("토큰 발급 실패", e);
@@ -92,7 +94,7 @@ public class AuthService {
                     .build();
                 authRepository.save(newOauth);
 
-                addTokenCookies(response, accessToken, refreshToken);
+                cookieUtil.addTokenCookies(response, accessToken, refreshToken);
 
             } catch (Exception e) {
                 throw new RuntimeException("신규 사용자 처리 실패", e);
@@ -107,7 +109,7 @@ public class AuthService {
      * @return
      */
     public void logout(HttpServletRequest request, HttpServletResponse response) {
-        String accessToken = extractTokenFromCookies(request);
+        String accessToken = cookieUtil.extractTokenFromCookies(request);
 
         try {
             if (accessToken == null) {
@@ -127,8 +129,8 @@ public class AuthService {
             });
 
             // 쿠키 제거
-            invalidateCookie(response, "access_token");
-            invalidateCookie(response, "refresh_token");
+            cookieUtil.invalidateCookie(response, "access_token");
+            cookieUtil.invalidateCookie(response, "refresh_token");
 
         } catch (ExpiredJwtException e) {
             throw new UnauthorizedException(ErrorMessage.ACCESS_TOKEN_EXPIRED);
@@ -141,7 +143,7 @@ public class AuthService {
      * @param response
      */
     public void refreshAccessToken(HttpServletRequest request, HttpServletResponse response) {
-        String refreshToken = extractTokenFromCookies(request);
+        String refreshToken = cookieUtil.extractTokenFromCookies(request);
 
         if (!jwtTokenProvider.isValidToken(refreshToken)) {
             throw new UnauthorizedException(ErrorMessage.INVALID_ACCESS_TOKEN);
@@ -177,46 +179,5 @@ public class AuthService {
         refreshCookie.setPath("/");
         refreshCookie.setMaxAge(7 * 24 * 60 * 60);
         response.addCookie(refreshCookie);
-    }
-
-    private void addTokenCookies(HttpServletResponse response, String accessToken, String refreshToken) {
-        Cookie accessTokenCookie = new Cookie("access_token", accessToken);
-        accessTokenCookie.setHttpOnly(true);
-        accessTokenCookie.setMaxAge(30 * 60);      // 30분
-        accessTokenCookie.setSecure(true);
-        accessTokenCookie.setPath("/");
-        response.addCookie(accessTokenCookie);
-
-        Cookie refreshTokenCookie = new Cookie("refresh_token", refreshToken);
-        refreshTokenCookie.setHttpOnly(true);
-        refreshTokenCookie.setMaxAge(7 * 24 * 60 * 60);  // 7일
-        refreshTokenCookie.setSecure(true);
-        refreshTokenCookie.setPath("/");
-        response.addCookie(refreshTokenCookie);
-    }
-
-    /**
-     * 쿠키에서 토큰 추출
-     * @param request
-     * @return
-     */
-    private String extractTokenFromCookies(HttpServletRequest request) {
-        if (request.getCookies() == null) return null;
-        for (Cookie cookie : request.getCookies()) {
-            if ("access_token".equals(cookie.getName())) {
-                return cookie.getValue();
-            } else if ("refresh_token".equals(cookie.getName())) {
-                return cookie.getValue();
-            }
-        }
-        return null;
-    }
-
-    public void invalidateCookie(HttpServletResponse response, String name) {
-        Cookie cookie = new Cookie(name, null);
-        cookie.setHttpOnly(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(0); // 즉시 만료
-        response.addCookie(cookie);
     }
 }
