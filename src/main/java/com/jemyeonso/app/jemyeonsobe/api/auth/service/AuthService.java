@@ -59,6 +59,12 @@ public class AuthService {
         if (authOpt.isPresent()) {
             User existingUser = authOpt.get().getUser();
 
+            // 탈퇴한 사용자였으면 deletedAt만 null로 하고 복구처리
+            if (existingUser.getDeletedAt() != null) {
+                existingUser.setDeletedAt(null);
+                userRepository.save(existingUser);
+            }
+
             try {
                 String refreshToken = jwtTokenProvider.createRefreshToken(existingUser);
                 String accessToken = jwtTokenProvider.createAccessToken(existingUser);

@@ -10,9 +10,12 @@ import com.jemyeonso.app.jemyeonsobe.util.SecurityUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -71,4 +74,15 @@ public class UserController {
 
         return ResponseEntity.ok(ApiResponse.success(ApiResponseCode.USER_IMPROVEMENT_GET_SUCCESS, "개선점 조회에 성공하였습니다.", responseDto));
     }
+
+    @DeleteMapping("/me")
+    @Operation(summary = "유저 탈퇴", description = "사용자가 탈퇴하는 API입니다.")
+    public ResponseEntity<?> deleteUser(HttpServletResponse response) {
+        Long userId = SecurityUtil.getCurrentUserId();
+
+        userService.deleteUser(userId, response);
+
+        return ResponseEntity.noContent().build();
+    }
 }
+
