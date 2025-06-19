@@ -5,6 +5,7 @@ import com.jemyeonso.app.jemyeonsobe.api.auth.entity.Oauth;
 import com.jemyeonso.app.jemyeonsobe.api.auth.repository.AuthRepository;
 import com.jemyeonso.app.jemyeonsobe.api.user.entity.User;
 import com.jemyeonso.app.jemyeonsobe.api.user.repository.UserRepository;
+import com.jemyeonso.app.jemyeonsobe.common.enums.ErrorMessage;
 import com.jemyeonso.app.jemyeonsobe.common.exception.UnauthorizedException;
 import com.jemyeonso.app.jemyeonsobe.util.JwtTokenProvider;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -110,11 +111,11 @@ public class AuthService {
 
         try {
             if (accessToken == null) {
-                throw new UnauthorizedException("유효하지 않은 access 토큰입니다.");
+                throw new UnauthorizedException(ErrorMessage.INVALID_ACCESS_TOKEN);
             }
 
             if (!jwtTokenProvider.isValidToken(accessToken)) {
-                throw new UnauthorizedException("잘못된 access 토큰입니다.");
+                throw new UnauthorizedException(ErrorMessage.INVALID_ACCESS_TOKEN);
             }
 
             Long userId = jwtTokenProvider.getUserIdFromToken(accessToken);
@@ -130,7 +131,7 @@ public class AuthService {
             invalidateCookie(response, "refresh_token");
 
         } catch (ExpiredJwtException e) {
-            throw new UnauthorizedException("만료된 access 토큰입니다.");
+            throw new UnauthorizedException(ErrorMessage.ACCESS_TOKEN_EXPIRED);
         }
     }
 
@@ -143,7 +144,7 @@ public class AuthService {
         String refreshToken = extractTokenFromCookies(request);
 
         if (!jwtTokenProvider.isValidToken(refreshToken)) {
-            throw new UnauthorizedException("유효하지 않은 리프레시 토큰입니다.");
+            throw new UnauthorizedException(ErrorMessage.INVALID_ACCESS_TOKEN);
         }
 
         Long userId = jwtTokenProvider.getUserIdFromToken(refreshToken);
@@ -151,7 +152,7 @@ public class AuthService {
         System.out.println("userId: " + userId);
 
         Optional<Oauth> oauthOpt = Optional.ofNullable(authRepository.findByUserId(userId)
-            .orElseThrow(() -> new UnauthorizedException("OAuth 정보가 존재하지 않습니다.")));
+            .orElseThrow(() -> new UnauthorizedException(ErrorMessage.OAUTH_NOT_FOUND)));
 
         User user = oauthOpt.get().getUser();
 

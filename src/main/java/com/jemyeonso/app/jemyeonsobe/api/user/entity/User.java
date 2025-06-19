@@ -46,7 +46,7 @@ public class User {
 
     // 개선점
     @Column(name = "improvement", length = 512)
-    private String improvement;
+    private String feedback;
 
     // 한마디
     @Column(name = "comment", length = 100)

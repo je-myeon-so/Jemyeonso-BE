@@ -1,6 +1,5 @@
 package com.jemyeonso.app.jemyeonsobe.api.document.entity;
 
-import jakarta.annotation.PreDestroy;
 import jakarta.persistence.*;
 import lombok.*;
 
