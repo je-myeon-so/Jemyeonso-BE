@@ -3,6 +3,7 @@ plugins {
 	id 'org.springframework.boot' version '3.5.0'
 	id 'io.spring.dependency-management' version '1.1.7'
 	id 'org.asciidoctor.jvm.convert' version '3.3.2'
+	id 'jacoco'
 }
 
 group = 'com.jemyeonso.app'
@@ -68,9 +69,68 @@ dependencies {
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+// JaCoCo 설정
+jacoco {
+	toolVersion = "0.8.11" // Spring Boot 3.x와 Java 21 호환 버전
+}
+
+jacocoTestReport {
+	getClassDirectories().setFrom(
+			files(classDirectories.files.collect {
+				fileTree(dir: it, excludes: [
+						'**/dto/**',
+						'**/entity/**',
+						'**/controller/**',
+						'**/config/**',
+						'**/exception/**',
+						'**/security/**',
+						'**/oauth/**',
+						'**/util/**',
+						'**/constant/**',
+						'**/Application.class',
+						'**/*Config.class',
+						'**/*Request.class',
+						'**/*Response.class'
+				])
+			})
+	)
+
+	reports {
+		// HTML 리포트 생성
+		html.destination file("$buildDir/jacoco/report.html")
+		xml.required = true
+		csv.required = true
+	}
+
+	// jacocoTestReport가 끝나면 jacocoTestCoverageVerification 동작
+	finalizedBy 'jacocoTestCoverageVerification'
+}
+
+jacocoTestCoverageVerification {
+	violationRules {
+		rule {
+			element = 'CLASS'
+			includes = ['**/service/**'] // Service 패키지만 검사 대상으로 설정
+
+			limit {
+				counter = 'BRANCH'
+				value = 'COVEREDRATIO'
+				minimum = 0.80 // Branch 커버리지 80%
+			}
+
+			limit {
+				counter = 'LINE'
+				value = 'COVEREDRATIO'
+				minimum = 0.80 // Line 커버리지 80%
+			}
+		}
+	}
+}
+
 tasks.named('test') {
 	outputs.dir snippetsDir
 	useJUnitPlatform()
+	finalizedBy 'jacocoTestReport' // 테스트가 끝나면 jacocoTestReport 동작
 }
 
 tasks.named('asciidoctor') {
