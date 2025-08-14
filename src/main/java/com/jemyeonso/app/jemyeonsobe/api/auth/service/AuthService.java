@@ -7,6 +7,7 @@ import com.jemyeonso.app.jemyeonsobe.api.user.entity.User;
 import com.jemyeonso.app.jemyeonsobe.api.user.repository.UserRepository;
 import com.jemyeonso.app.jemyeonsobe.common.enums.ErrorMessage;
 import com.jemyeonso.app.jemyeonsobe.common.exception.UnauthorizedException;
+import com.jemyeonso.app.jemyeonsobe.util.CookieUtil;
 import com.jemyeonso.app.jemyeonsobe.util.JwtTokenProvider;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.Cookie;
@@ -26,6 +27,7 @@ public class AuthService {
     private final AuthRepository authRepository;
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
+    private final CookieUtil cookieUtil;
 
     public void loginWithKakao(String code, HttpServletResponse response) {
         KakaoUserResponseDto kakaouser;
@@ -127,8 +129,8 @@ public class AuthService {
             });
 
             // 쿠키 제거
-            invalidateCookie(response, "access_token");
-            invalidateCookie(response, "refresh_token");
+            cookieUtil.invalidateCookie(response, "access_token");
+            cookieUtil.invalidateCookie(response, "refresh_token");
 
         } catch (ExpiredJwtException e) {
             throw new UnauthorizedException(ErrorMessage.ACCESS_TOKEN_EXPIRED);
@@ -210,13 +212,5 @@ public class AuthService {
             }
         }
         return null;
-    }
-
-    public void invalidateCookie(HttpServletResponse response, String name) {
-        Cookie cookie = new Cookie(name, null);
-        cookie.setHttpOnly(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(0); // 즉시 만료
-        response.addCookie(cookie);
     }
 }
