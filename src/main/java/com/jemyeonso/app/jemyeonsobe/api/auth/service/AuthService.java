@@ -18,6 +18,7 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -29,10 +30,9 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final CookieUtil cookieUtil;
 
+    @Transactional
     public void loginWithKakao(String code, HttpServletResponse response) {
         KakaoUserResponseDto kakaouser;
-
-        // Kakao 유저 정보 가져오기
         try {
             kakaouser = kakaoOauthClient.getUserInfo(code);
         } catch (Exception e) {
@@ -45,60 +45,99 @@ public class AuthService {
         String email = kakaouser.getEmail();
         String profileImageUrl = kakaouser.getProfileImageUrl();
 
-        Optional<Oauth> authOpt;
+        // providerId로 Oauth 링크 먼저 탐색
+        Optional<Oauth> oauthOpt = authRepository.findByProviderAndProviderId("KAKAO", kakaoId);
 
-        // 기존 사용자 조회
-        try {
-            authOpt = authRepository.findByProviderAndProviderId("KAKAO", kakaoId);
-        } catch (Exception e) {
-            log.error("DB에서 Oauth 정보 조회 실패", e);
-            throw new RuntimeException("DB 조회 실패", e);
-        }
+        if (oauthOpt.isPresent()) {
+            // Oauth가 이미 존재 → 연결된 유저 확인
+            User user = oauthOpt.get().getUser();
 
-        // 기존 사용자 처리
-        if (authOpt.isPresent()) {
-            User existingUser = authOpt.get().getUser();
-
-            try {
-                String refreshToken = jwtTokenProvider.createRefreshToken(existingUser);
-                String accessToken = jwtTokenProvider.createAccessToken(existingUser);
-
-                authRepository.updateRefreshToken(existingUser.getId(), refreshToken);
-
-                addTokenCookies(response, accessToken, refreshToken);
-            } catch (Exception e) {
-                log.error("기존 사용자 토큰 발급 실패", e);
-                throw new RuntimeException("토큰 발급 실패", e);
+            // 탈퇴 상태면 복구 (재가입)
+            if (user.getDeletedAt() != null) {
+                user.setDeletedAt(null);
+                user.setUpdatedAt(LocalDateTime.now());
+                // 필요 시 프로필 동기화
+                user.setNickname(name);
+                user.setName(name);
+                user.setEmail(email);
+                user.setProfileImgUrl(profileImageUrl);
+                // userRepository.save(user);
             }
 
-        } else {
-            // 신규 사용자 처리
-            try {
-                User newUser = User.builder()
-                    .nickname(name)
-                    .name(name)
-                    .email(email)
-                    .profileImgUrl(profileImageUrl)
-                    .createdAt(LocalDateTime.now())
-                    .build();
-                userRepository.save(newUser);
+            issueAndAttachTokens(response, user);
+            return;
+        }
 
-                String refreshToken = jwtTokenProvider.createRefreshToken(newUser);
-                String accessToken = jwtTokenProvider.createAccessToken(newUser);
+        // Oauth가 없으면, 이메일 기준으로 '탈퇴 포함' 사용자 찾기
+        Optional<User> userByEmailAny = userRepository.findByEmailIncludingDeleted(email);
+        if (userByEmailAny.isPresent()) {
+            User user = userByEmailAny.get();
+
+            if (user.getDeletedAt() != null) {
+                // 탈퇴 유저 복구 후 새 Oauth row 생성
+                user.setDeletedAt(null);
+                user.setUpdatedAt(LocalDateTime.now());
+                user.setNickname(name);
+                user.setName(name);
+                user.setProfileImgUrl(profileImageUrl);
+                // userRepository.save(user);
 
                 Oauth newOauth = Oauth.builder()
                     .provider("KAKAO")
                     .providerId(kakaoId)
-                    .user(newUser)
-                    .refreshToken(refreshToken)
+                    .user(user)
+                    .refreshToken(null)
                     .build();
                 authRepository.save(newOauth);
 
-                addTokenCookies(response, accessToken, refreshToken);
+                issueAndAttachTokens(response, user);
+                return;
+            } else {
+                // OAuth 만 신규 연결
+                Oauth newOauth = Oauth.builder()
+                    .provider("KAKAO")
+                    .providerId(kakaoId)
+                    .user(userByEmailAny.get())
+                    .refreshToken(null)
+                    .build();
+                authRepository.save(newOauth);
 
-            } catch (Exception e) {
-                throw new RuntimeException("신규 사용자 처리 실패", e);
+                issueAndAttachTokens(response, userByEmailAny.get());
+                return;
             }
+        }
+
+        // 3) 신규 가입
+        User newUser = User.builder()
+            .nickname(name)
+            .name(name)
+            .email(email)
+            .profileImgUrl(profileImageUrl)
+            .createdAt(LocalDateTime.now())
+            .build();
+        userRepository.save(newUser);
+
+        Oauth newOauth = Oauth.builder()
+            .provider("KAKAO")
+            .providerId(kakaoId)
+            .user(newUser)
+            .refreshToken(null)
+            .build();
+        authRepository.save(newOauth);
+
+        issueAndAttachTokens(response, newUser);
+    }
+
+    private void issueAndAttachTokens(HttpServletResponse response, User user) {
+        try {
+            String refreshToken = jwtTokenProvider.createRefreshToken(user);
+            String accessToken = jwtTokenProvider.createAccessToken(user);
+
+            authRepository.updateRefreshToken(user.getId(), refreshToken); // 저장 정책에 맞게
+            addTokenCookies(response, accessToken, refreshToken);
+        } catch (Exception e) {
+            log.error("토큰 발급/저장 실패", e);
+            throw new RuntimeException("토큰 발급 실패", e);
         }
     }
 
