@@ -44,6 +44,7 @@ public class UserService {
             .build();
     }
 
+    @Transactional
     public UserInfoResponseDto patchUserInfo(Long userId, String nickname, String profileImgUrl, String comment) {
         User user = userRepository.findByIdAndDeletedAtIsNull(userId)
             .orElseThrow(()->new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
@@ -62,6 +63,7 @@ public class UserService {
             .build();
     }
 
+    @Transactional(readOnly = true)
     public UserFeedbackResponseDto getImprovement(Long userId) {
         // 유저 찾기
         User user = userRepository.findByIdAndDeletedAtIsNull(userId)
