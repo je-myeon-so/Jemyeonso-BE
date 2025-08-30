@@ -3,6 +3,8 @@ package com.jemyeonso.app.jemyeonsobe.api.interviews.entity;
 import com.jemyeonso.app.jemyeonsobe.api.document.entity.Document;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.DynamicInsert;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -15,6 +17,7 @@ import java.util.List;
 @Setter
 @Builder
 @Table(name = "interviews")
+@DynamicInsert
 public class Interview {
 
     @Id
@@ -41,8 +44,9 @@ public class Interview {
     @Column(name = "jobtype", nullable = false, length = 30)
     private String jobtype;
 
-    @Column(name = "total_score")
-    private Integer totalScore;
+    @Column(name = "avg_score", nullable = false)
+    @ColumnDefault("0")
+    private Integer AvgScore;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -67,7 +71,7 @@ public class Interview {
 
     // Enum 정의
     public enum QuestionType {
-        압박, 느슨, 기술
+        Education, Project, SoftSkill, CultureFit
     }
 
     public enum QuestionLevel {

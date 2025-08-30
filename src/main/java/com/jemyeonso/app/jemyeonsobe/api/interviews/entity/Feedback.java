@@ -2,6 +2,9 @@ package com.jemyeonso.app.jemyeonsobe.api.interviews.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.DynamicInsert;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 
 @Entity
 @Table(name = "feedbacks")
@@ -10,6 +13,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@DynamicInsert
 public class Feedback {
 
     @Id
@@ -30,4 +34,9 @@ public class Feedback {
 
     @Column(name = "error_type", nullable = false, columnDefinition = "TEXT")
     private String errorType;
+
+    // 응답별 점수
+    @Column(name = "score", nullable = false)
+    @ColumnDefault("0")
+    private Integer score;
 }

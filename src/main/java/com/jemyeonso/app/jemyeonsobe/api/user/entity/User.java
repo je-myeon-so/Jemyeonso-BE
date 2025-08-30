@@ -17,6 +17,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.DynamicInsert;
 
 @Entity
 @AllArgsConstructor
@@ -24,6 +26,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Builder
+@DynamicInsert
 @Table(name = "users")
 public class User {
     @Id // PK
@@ -52,13 +55,14 @@ public class User {
     @Column(name = "comment", length = 100)
     private String comment;
 
-    @Column(name = "highest_score")
-    private Integer highestScore;
+    @Column(name = "total_score", nullable = false)
+    @ColumnDefault("0")
+    private Integer totalScore;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "update_at")
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
     @Column(name = "deleted_at")
