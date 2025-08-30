@@ -67,7 +67,7 @@ public class Interview {
 
     // Enum 정의
     public enum QuestionType {
-        압박, 느슨, 기술
+        Education, Project, SoftSkill, CultureFit
     }
 
     public enum QuestionLevel {
