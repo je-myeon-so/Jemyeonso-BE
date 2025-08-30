@@ -184,7 +184,7 @@ public class InterviewService {
                 .questionCategory(interview.getQuestionCategory().name())
                 .questionLevel(interview.getQuestionLevel().name())
                 .jobtype(interview.getJobtype())
-                .totalScore(interview.getTotalScore())
+                .totalScore(interview.getAvgScore())
                 .createdAt(interview.getCreatedAt())
                 .questions(questionSummaries)
                 .build();
