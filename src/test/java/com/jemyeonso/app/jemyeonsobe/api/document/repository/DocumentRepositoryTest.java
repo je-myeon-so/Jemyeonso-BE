@@ -100,7 +100,7 @@ class DocumentRepositoryTest {
         void findByUserIdOrderByCreatedAtDesc_Success() {
             // given
             Long userId = 100L;
-            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime baseTime = LocalDateTime.now();
 
             // 첫 번째 문서 (가장 오래된)
             Document document1 = Document.builder()
@@ -110,29 +110,36 @@ class DocumentRepositoryTest {
                     .content("첫 번째 이력서")
                     .link("https://s3.amazonaws.com/file1.pdf")
                     .build();
-            document1.setCreatedAt(now.minusDays(2)); // 2일 전
+            document1.setCreatedAt(baseTime.minusDays(2)); // 2일 전
             entityManager.persist(document1);
 
-            // 두 번째 문서 (가장 최근)
-            Document document2 = Document.builder()
-                    .userId(userId)
-                    .type("portfolio")
-                    .filename("포트폴리오.pdf")
-                    .content("포트폴리오")
-                    .link("https://s3.amazonaws.com/file2.pdf")
-                    .build();
-            document2.setCreatedAt(now); // 현재
-            entityManager.persist(document2);
+            // 시간차를 두고 flush
+            entityManager.flush();
+            entityManager.clear();
 
-            // 세 번째 문서 (중간)
-            Document document3 = Document.builder()
+            // 두 번째 문서 (중간)
+            Document document2 = Document.builder()
                     .userId(userId)
                     .type("resume")
                     .filename("두번째_이력서.pdf")
                     .content("두 번째 이력서")
+                    .link("https://s3.amazonaws.com/file2.pdf")
+                    .build();
+            document2.setCreatedAt(baseTime.minusDays(1)); // 1일 전
+            entityManager.persist(document2);
+
+            entityManager.flush();
+            entityManager.clear();
+
+            // 세 번째 문서 (가장 최근)
+            Document document3 = Document.builder()
+                    .userId(userId)
+                    .type("portfolio")
+                    .filename("포트폴리오.pdf")
+                    .content("포트폴리오")
                     .link("https://s3.amazonaws.com/file3.pdf")
                     .build();
-            document3.setCreatedAt(now.minusDays(1)); // 1일 전
+            document3.setCreatedAt(baseTime); // 현재
             entityManager.persist(document3);
 
             // 다른 유저의 문서 (결과에 포함되면 안됨)
@@ -178,7 +185,7 @@ class DocumentRepositoryTest {
             // then
             assertThat(result.getContent()).isEmpty();
             assertThat(result.getTotalElements()).isEqualTo(0);
-            assertThat(result.getTotalPages()).isEqualTo(1);
+            assertThat(result.getTotalPages()).isEqualTo(0); // 빈 페이지의 경우 0이어야 함
         }
 
         @Test
@@ -186,8 +193,9 @@ class DocumentRepositoryTest {
         void findByUserIdOrderByCreatedAtDesc_Pagination_Success() {
             // given
             Long userId = 100L;
+            LocalDateTime baseTime = LocalDateTime.now();
 
-            // 5개의 문서 생성
+            // 5개의 문서 생성 (시간 순서를 명확하게)
             for (int i = 1; i <= 5; i++) {
                 Document document = Document.builder()
                         .userId(userId)
@@ -196,9 +204,10 @@ class DocumentRepositoryTest {
                         .content("이력서 내용 " + i)
                         .link("https://s3.amazonaws.com/file" + i + ".pdf")
                         .build();
+                document.setCreatedAt(baseTime.minusDays(5 - i)); // i가 클수록 최근
                 entityManager.persist(document);
+                entityManager.flush(); // 각각 즉시 flush하여 순서 보장
             }
-            entityManager.flush();
 
             // 페이지 크기 2로 설정
             Pageable firstPage = PageRequest.of(0, 2);
@@ -308,9 +317,19 @@ class DocumentRepositoryTest {
 
             Document savedDocument = entityManager.persistAndFlush(document);
 
+            // Entity를 clear하여 영속성 컨텍스트에서 분리
+            entityManager.clear();
+
             // when
-            savedDocument.setContent("수정된 내용");
-            Document updatedDocument = documentRepository.save(savedDocument);
+            // 다시 조회하여 수정
+            Optional<Document> foundDocument = documentRepository.findById(savedDocument.getId());
+            assertThat(foundDocument).isPresent();
+
+            Document documentToUpdate = foundDocument.get();
+            documentToUpdate.setContent("수정된 내용");
+            documentToUpdate.setUpdatedAt(LocalDateTime.now()); // updatedAt 명시적 설정
+
+            Document updatedDocument = documentRepository.save(documentToUpdate);
 
             // then
             assertThat(updatedDocument.getContent()).isEqualTo("수정된 내용");
