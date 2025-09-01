@@ -76,7 +76,6 @@ public class InterviewService {
                 .answerTime(null)
                 .content(requestDto.getPreviousAnswer())
                 .questionId(requestDto.getPreviousQuestionId())
-                .score(null)
                 .build();
 
         answerRepository.save(answer);
