@@ -1,6 +1,8 @@
 package com.jemyeonso.app.jemyeonsobe.api.user.repository;
 
 import com.jemyeonso.app.jemyeonsobe.api.user.entity.User;
+
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -21,4 +23,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("UPDATE User u SET u.totalScore = 0 WHERE u.deletedAt IS NULL")
     int resetAllTotalScores();
 
+    @Query("SELECT u FROM User u WHERE u.deletedAt IS NULL")
+    List<User> findByDeletedAtIsNull();
 }

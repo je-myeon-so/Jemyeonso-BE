@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
+
 @Repository
 public interface InterviewRepository extends JpaRepository<Interview, Long> {
 
@@ -17,4 +19,14 @@ public interface InterviewRepository extends JpaRepository<Interview, Long> {
     // 특정 유저의 면접만 조회 (Document와 함께)
     @Query("SELECT i FROM Interview i JOIN FETCH i.document WHERE i.userId = :userId ORDER BY i.createdAt DESC")
     Page<Interview> findByUserIdWithDocument(@Param("userId") Long userId, Pageable pageable);
+
+    @Query("SELECT COALESCE(SUM(i.AvgScore), 0) FROM Interview i " +
+            "WHERE i.userId = :userId " +
+            "AND i.createdAt >= :startDate " +
+            "AND i.createdAt <= :endDate " +
+            "AND i.deletedAt IS NULL " +
+            "AND i.AvgScore > 0")
+    Integer calculateWeeklyScoreByUserId(@Param("userId") Long userId,
+                                         @Param("startDate") LocalDateTime startDate,
+                                         @Param("endDate") LocalDateTime endDate);
 }

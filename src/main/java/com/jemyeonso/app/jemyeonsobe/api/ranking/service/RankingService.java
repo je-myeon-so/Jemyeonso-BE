@@ -4,14 +4,18 @@ import com.jemyeonso.app.jemyeonsobe.api.ranking.dto.WeeklyRankingResponseDto;
 import com.jemyeonso.app.jemyeonsobe.api.ranking.dto.WeeklyScoreResponseDto;
 import com.jemyeonso.app.jemyeonsobe.api.ranking.repository.RankingRepository;
 import com.jemyeonso.app.jemyeonsobe.api.user.entity.User;
+import com.jemyeonso.app.jemyeonsobe.common.enums.ErrorMessage;
+import com.jemyeonso.app.jemyeonsobe.common.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
 
 @Slf4j
 @Service
@@ -21,33 +25,24 @@ public class RankingService {
 
     private final RankingRepository rankingRepository;
 
-    // totalscore 기준으로 랭킹 조회
     public WeeklyRankingResponseDto getWeeklyRanking(int limit) {
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime weekAgo = now.minusWeeks(1);
+        // User 테이블의 totalScore를 기준으로 랭킹 조회
+        Pageable pageable = PageRequest.of(0, limit, Sort.by("totalScore").descending());
+        List<User> topUsers = rankingRepository.findTopUsersByTotalScore(pageable);
 
-        List<Object[]> userScores = rankingRepository.findWeeklyRankings(weekAgo, now, limit);
-
-        List<WeeklyRankingResponseDto.UserRankingDto> rankings = new ArrayList<>();
-        int rank = 1;
-
-        for (Object[] result : userScores) {
-            User user = (User) result[0];
-            Long totalScore = (Long) result[1];
-            Long interviewCount = (Long) result[2];
-            Double averageScore = interviewCount > 0 ? (double) totalScore / interviewCount : 0.0;
-
-            rankings.add(WeeklyRankingResponseDto.UserRankingDto.builder()
-                    .userId(user.getId())
-                    .name(user.getName())
-                    .nickname(user.getNickname())
-                    .profileImgUrl(user.getProfileImgUrl())
-                    .totalScore(totalScore.intValue())
-                    .interviewCount(interviewCount.intValue())
-                    .averageScore(Math.round(averageScore * 100.0) / 100.0)
-                    .rank(rank++)
-                    .build());
-        }
+        List<WeeklyRankingResponseDto.UserRankingDto> rankings = IntStream.range(0, topUsers.size())
+                .mapToObj(i -> {
+                    User user = topUsers.get(i);
+                    return WeeklyRankingResponseDto.UserRankingDto.builder()
+                            .userId(user.getId())
+                            .name(user.getName())
+                            .nickname(user.getNickname())
+                            .profileImgUrl(user.getProfileImgUrl())
+                            .totalScore(user.getTotalScore())
+                            .rank(i + 1)
+                            .build();
+                })
+                .toList();
 
         return WeeklyRankingResponseDto.builder()
                 .rankings(rankings)
@@ -55,32 +50,18 @@ public class RankingService {
                 .build();
     }
 
-    // 자신의 주간 점수 조회
     public WeeklyScoreResponseDto getWeeklyScore(Long userId) {
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime weekAgo = now.minusWeeks(1);
+        // 사용자 존재 여부 확인
+        User user = rankingRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
 
-        List<Object[]> userScore = rankingRepository.findWeeklyScoreByUserId(userId, weekAgo, now);
-
-        if (userScore.isEmpty()) {
-            return WeeklyScoreResponseDto.builder()
-                    .userId(userId)
-                    .totalScore(0)
-                    .interviewCount(0)
-                    .averageScore(0.0)
-                    .build();
-        }
-
-        Object[] result = userScore.get(0);
-        Long totalScore = (Long) result[0];
-        Long interviewCount = (Long) result[1];
-        Double averageScore = interviewCount > 0 ? (double) totalScore / interviewCount : 0.0;
+        // 현재 사용자의 랭킹 조회
+        Integer rank = rankingRepository.findUserRankByTotalScore(userId);
 
         return WeeklyScoreResponseDto.builder()
-                .userId(userId)
-                .totalScore(totalScore.intValue())
-                .interviewCount(interviewCount.intValue())
-                .averageScore(Math.round(averageScore * 100.0) / 100.0)
+                .userId(user.getId())
+                .totalScore(user.getTotalScore())
+                .rank(rank != null ? rank : 0)
                 .build();
     }
 }
