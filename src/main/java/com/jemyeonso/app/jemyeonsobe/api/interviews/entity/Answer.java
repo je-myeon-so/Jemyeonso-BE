@@ -28,9 +28,6 @@ public class Answer {
     @Column(name = "answer_time")
     private String answerTime;
 
-    @Column(name = "score")
-    private Integer score;
-
     // Feedback과의 연관관계
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "answer_id")
