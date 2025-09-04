@@ -35,7 +35,7 @@ public class Interview {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "question_category", nullable = false)
-    private QuestionType questionCategory;
+    private QuestionCategory questionCategory;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "question_level", nullable = false)
@@ -70,7 +70,7 @@ public class Interview {
     }
 
     // Enum 정의
-    public enum QuestionType {
+    public enum QuestionCategory {
         Education, Project, SoftSkill, CultureFit
     }
 
