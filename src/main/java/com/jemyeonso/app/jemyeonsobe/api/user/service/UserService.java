@@ -15,7 +15,6 @@ import com.jemyeonso.app.jemyeonsobe.common.exception.UnauthorizedException;
 import com.jemyeonso.app.jemyeonsobe.util.CookieUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
-import java.util.concurrent.TimeUnit;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
