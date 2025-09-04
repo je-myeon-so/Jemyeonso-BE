@@ -61,6 +61,7 @@ public class InterviewController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 에러")
     })
+
     @PostMapping("/questions")
     public ResponseEntity<?> createQuestion(@RequestBody QuestionRequestDto requestDto) {
         Long userId = SecurityUtil.getCurrentUserId();
