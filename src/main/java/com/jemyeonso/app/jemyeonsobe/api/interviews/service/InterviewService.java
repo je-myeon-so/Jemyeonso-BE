@@ -11,11 +11,16 @@ import com.jemyeonso.app.jemyeonsobe.api.interviews.service.ai.AiAnalysisService
 import com.jemyeonso.app.jemyeonsobe.api.interviews.service.ai.dto.AiQuestionRequestDto;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.service.ai.dto.AiQuestionResponseDto;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.service.ai.AiQuestionService;
+import com.jemyeonso.app.jemyeonsobe.api.user.service.UserService;
 import com.jemyeonso.app.jemyeonsobe.common.enums.ErrorMessage;
 import com.jemyeonso.app.jemyeonsobe.common.exception.ResourceNotFoundException;
 import com.jemyeonso.app.jemyeonsobe.common.exception.InterviewAccessDeniedException;
+import java.time.Duration;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +28,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -33,11 +40,37 @@ public class InterviewService {
     private final AiQuestionService aiQuestionService;
     private final AiAnalysisService aiAnalysisService;
     private final AnswerRepository answerRepository;
+    private final UserService userService;
+    private final RedisTemplate<String, String> redisTemplate;
+
+    private String ptrKey(Long userId) {
+        return "user:" + userId + ":improvement:latest:interviewId";
+    }
+
+    private String lockKey(Long u, Long i){
+        return "lock:improve:user:" + u + ":interview:" + i;
+    }
+
+    private boolean tryLock(String key, Duration ttl) {
+        Boolean ok = redisTemplate.opsForValue().setIfAbsent(key, "1", ttl);
+        return Boolean.TRUE.equals(ok);
+    }
+
+    @Async("improvementExecutor")
+    public void refreshImprovementAsync(Long userId, Long interviewId, Long documentId, String jobType) {
+        try {
+            userService.refreshImprovementFromAi(userId, interviewId, documentId, jobType);
+        } catch (Exception e) {
+            org.slf4j.LoggerFactory.getLogger(getClass())
+                .warn("improvement refresh failed: userId={}, interviewId={}, err={}",
+                    userId, interviewId, e.toString());
+        }
+    }
 
     @Transactional
     public InterviewResponseDto createInterview(Long userId, InterviewRequestDto requestDto) {
         Interview interview = Interview.builder()
-                .questionCategory(Interview.QuestionType.valueOf(requestDto.getQuestionCategory()))
+                .questionCategory(Interview.QuestionCategory.valueOf(requestDto.getQuestionCategory()))
                 .questionLevel(Interview.QuestionLevel.valueOf(requestDto.getQuestionLevel()))
                 .jobtype(requestDto.getJobType())
                 .documentId(requestDto.getDocumentId())
@@ -174,6 +207,28 @@ public class InterviewService {
                         .createdAt(question.getCreatedAt())
                         .build())
                 .collect(Collectors.toList());
+
+        // 사용자의 최신 인터뷰만 대상으로
+        interviewRepository.findLatestByUserId(userId).ifPresent(latest -> {
+            if (latest.getId().equals(interviewId)) {
+                // 포인터 확인
+                String currentPtr = redisTemplate.opsForValue().get(ptrKey(userId));
+                boolean need = (currentPtr == null || !currentPtr.equals(String.valueOf(interviewId)));
+
+                if (need) {
+                    // 중복 방지 락 (예: 10분)
+                    Boolean got = redisTemplate.opsForValue().setIfAbsent(lockKey(userId, interviewId), "1", Duration.ofMinutes(10));
+                    if (Boolean.TRUE.equals(got)) {
+                        // 더블 체크: 경쟁 상황에서 이미 누가 갱신했을 수 있음
+                        String again = redisTemplate.opsForValue().get(ptrKey(userId));
+                        if (again == null || !again.equals(String.valueOf(interviewId))) {
+                            // 비동기 갱신 추천 (응답 지연 방지)
+                            refreshImprovementAsync(userId, latest.getId(), latest.getDocumentId(), latest.getJobtype());
+                        }
+                    }
+                }
+            }
+        });
 
         return InterviewQuestionsResponseDto.builder()
                 .interviewId(interview.getId())

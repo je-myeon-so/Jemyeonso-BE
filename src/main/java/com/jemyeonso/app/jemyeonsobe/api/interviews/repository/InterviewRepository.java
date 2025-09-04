@@ -1,7 +1,10 @@
 package com.jemyeonso.app.jemyeonsobe.api.interviews.repository;
 
 import com.jemyeonso.app.jemyeonsobe.api.interviews.entity.Interview;
+import java.util.List;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -29,4 +32,16 @@ public interface InterviewRepository extends JpaRepository<Interview, Long> {
     Integer calculateWeeklyScoreByUserId(@Param("userId") Long userId,
                                          @Param("startDate") LocalDateTime startDate,
                                          @Param("endDate") LocalDateTime endDate);
+
+
+
+    // 최신 면접 조회 메서드 추가
+    @Query("SELECT i FROM Interview i WHERE i.userId = :userId ORDER BY i.createdAt DESC")
+    List<Interview> findTopByUserIdOrderByCreatedAtDesc(@Param("userId") Long userId, Pageable pageable);
+
+    default Optional<Interview> findLatestByUserId(Long userId) {
+        List<Interview> list = findTopByUserIdOrderByCreatedAtDesc(userId, PageRequest.of(0, 1));
+        return list.isEmpty() ? Optional.empty() : Optional.of(list.get(0));
+    }
+
 }
