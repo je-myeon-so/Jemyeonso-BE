@@ -1,5 +1,6 @@
 package com.jemyeonso.app.jemyeonsobe.api.user.controller;
 
+import com.jemyeonso.app.jemyeonsobe.api.user.dto.ImproveRefreshRequestDto;
 import com.jemyeonso.app.jemyeonsobe.api.user.dto.UserFeedbackResponseDto;
 import com.jemyeonso.app.jemyeonsobe.api.user.dto.UserInfoRequestDto;
 import com.jemyeonso.app.jemyeonsobe.api.user.dto.UserInfoResponseDto;
@@ -16,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -61,6 +63,14 @@ public class UserController {
         UserInfoResponseDto responseDto = userService.patchUserInfo(userId, nickname, profileImgUrl, comment);
 
         return ResponseEntity.ok(ApiResponse.success(ApiResponseCode.USER_INFO_EDIT_SUCCESS, "유저 정보 수정에 성공하였습니다.", responseDto));
+    }
+
+    @PostMapping("/me/improvement/refresh")
+    public ResponseEntity<?> refreshImprovement(@RequestBody ImproveRefreshRequestDto requestDto) {
+        Long userId = SecurityUtil.getCurrentUserId();
+        userService.refreshImprovementFromAi(userId, requestDto.getInterviewId(), requestDto.getDocumentId(), requestDto.getJobType());
+
+        return ResponseEntity.ok(ApiResponse.success(ApiResponseCode.USER_IMPROVEMENT_REFRESH_SUCCESS, "개선점 갱신에 성공하였습니다.", null));
     }
 
     @GetMapping("/me/improvement")
