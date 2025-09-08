@@ -82,4 +82,3 @@ jobs:
             docker pull $FULL_IMAGE
             bash /home/ubuntu/deploy/scripts/deploy.sh
             '
-          EOF
