@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @Slf4j
 @RestControllerAdvice
@@ -40,6 +41,23 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<?>> handleMaxSizeException(MaxUploadSizeExceededException ex) {
         log.warn("[MaxUploadSizeExceeded] {}", ex.getMessage());
         return buildErrorResponse(ApiResponseCode.MAX_UPLOAD_SIZE_EXCEEDED, "파일 크기가 제한을 초과했습니다.", HttpStatus.PAYLOAD_TOO_LARGE);
+    }
+
+    // 브라우저 자동 요청들을 로그에서 제외하는 핸들러 추가
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<Void> handleNoResourceFound(NoResourceFoundException ex, HttpServletRequest request) {
+        String requestURI = request.getRequestURI();
+
+        // 브라우저나 개발 도구의 자동 요청들은 조용히 처리 (로그 없음)
+        if (requestURI.contains("favicon.ico") ||
+                requestURI.contains(".well-known") ||
+                requestURI.contains("chrome.devtools") ||
+                requestURI.contains("apple-touch-icon")) {
+            return ResponseEntity.notFound().build();
+        }
+
+        // 실제 API 리소스가 없는 경우만 로그 출력
+        return ResponseEntity.notFound().build();
     }
 
     @ExceptionHandler(Exception.class)
