@@ -10,4 +10,5 @@ import lombok.Getter;
 public class WeeklyScoreResponseDto {
     private Long userId;
     private Integer totalScore;
+    private Integer rank;
 }
