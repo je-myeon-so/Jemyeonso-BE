@@ -11,6 +11,7 @@ import com.jemyeonso.app.jemyeonsobe.api.interviews.service.ai.AiAnalysisService
 import com.jemyeonso.app.jemyeonsobe.api.interviews.service.ai.dto.AiQuestionRequestDto;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.service.ai.dto.AiQuestionResponseDto;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.service.ai.AiQuestionService;
+import com.jemyeonso.app.jemyeonsobe.api.user.service.UserDetailService;
 import com.jemyeonso.app.jemyeonsobe.api.user.service.UserService;
 import com.jemyeonso.app.jemyeonsobe.common.enums.ErrorMessage;
 import com.jemyeonso.app.jemyeonsobe.common.exception.ResourceNotFoundException;
@@ -42,6 +43,7 @@ public class InterviewService {
     private final AnswerRepository answerRepository;
     private final UserService userService;
     private final RedisTemplate<String, String> redisTemplate;
+    private final UserDetailService userDetailService;
 
     private String ptrKey(Long userId) {
         return "user:" + userId + ":improvement:latest:interviewId";
@@ -59,7 +61,7 @@ public class InterviewService {
     @Async("improvementExecutor")
     public void refreshImprovementAsync(Long userId, Long interviewId, Long documentId, String jobType) {
         try {
-            userService.refreshImprovementFromAi(userId, interviewId, documentId, jobType);
+            userDetailService.refreshImprovementFromAi(userId, interviewId, documentId, jobType);
         } catch (Exception e) {
             org.slf4j.LoggerFactory.getLogger(getClass())
                 .warn("improvement refresh failed: userId={}, interviewId={}, err={}",

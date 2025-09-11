@@ -7,6 +7,8 @@ import com.jemyeonso.app.jemyeonsobe.api.document.repository.DocumentRepository;
 import com.jemyeonso.app.jemyeonsobe.api.user.dto.UserFeedbackResponseDto;
 import com.jemyeonso.app.jemyeonsobe.api.user.dto.UserInfoResponseDto;
 import com.jemyeonso.app.jemyeonsobe.api.user.entity.User;
+import com.jemyeonso.app.jemyeonsobe.api.user.entity.UserDetail;
+import com.jemyeonso.app.jemyeonsobe.api.user.repository.UserDetailRepository;
 import com.jemyeonso.app.jemyeonsobe.api.user.repository.UserRepository;
 import com.jemyeonso.app.jemyeonsobe.api.user.service.ai.AiImproveService;
 import com.jemyeonso.app.jemyeonsobe.common.enums.ErrorMessage;
@@ -30,8 +32,6 @@ public class UserService {
     private final KakaoOauthClient kakaoOauthClient;
     private final CookieUtil cookieUtil;
     private final DocumentRepository documentRepository;
-    private final AiImproveService aiImproveService;
-    private final RedisTemplate<String, String> redisTemplate;
 
     @Transactional(readOnly = true)
     public UserInfoResponseDto getUserInfo(Long userId) {
@@ -44,17 +44,15 @@ public class UserService {
             .name(user.getName())
             .nickname(user.getNickname())
             .email(user.getEmail())
-            .comment(user.getComment())
             .build();
     }
 
-    public UserInfoResponseDto patchUserInfo(Long userId, String nickname, String profileImgUrl, String comment) {
+    public UserInfoResponseDto patchUserInfo(Long userId, String nickname, String profileImgUrl) {
         User user = userRepository.findByIdAndDeletedAtIsNull(userId)
             .orElseThrow(()->new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
 
         if (nickname != null) user.setNickname(nickname);
         if (profileImgUrl != null) user.setProfileImgUrl(profileImgUrl);
-        if (comment != null) user.setComment(comment);
 
         return UserInfoResponseDto.builder()
             .userId(user.getId())
@@ -62,57 +60,6 @@ public class UserService {
             .name(user.getName())
             .nickname(user.getNickname())
             .email(user.getEmail())
-            .comment(user.getComment())
-            .build();
-    }
-
-    @Transactional
-    public void refreshImprovementFromAi(Long userId, Long interviewId, Long documentId, String jobType) {
-        // 해당 사용자 존재 확인
-        User user = userRepository.findByIdAndDeletedAtIsNull(userId)
-            .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
-
-        // AI에서 개선점
-        String overallComment = aiImproveService.fetchOverallComment(interviewId, documentId, jobType);
-        log.info("Fetch overall comment from AiImproveClient: {}", overallComment);
-
-        // DB에 저장
-        user.setImprovement(overallComment);
-//        user.setUpdatedAt(LocalDateTime.now());
-
-        // Redis 반영
-        String valKey = "user:" + userId + ":improvement:latest";
-        String ptrKey = "user:" + userId + ":improvement:latest:interviewId";
-
-        redisTemplate.opsForValue().set(valKey, overallComment);
-        redisTemplate.opsForValue().set(ptrKey, String.valueOf(interviewId));
-    }
-
-    public UserFeedbackResponseDto getImprovement(Long userId) {
-        // 유저 찾기
-        User user = userRepository.findByIdAndDeletedAtIsNull(userId)
-            .orElseThrow(()->new ResourceNotFoundException(ErrorMessage.USER_NOT_FOUND));
-
-        String key = "user:" + user.getId() + ":improvement:latest";
-        String cachedValue = redisTemplate.opsForValue().get(key);
-
-        // Redis에 저장되어 있으면 캐시된 값 사용
-        if (cachedValue != null) {
-            return UserFeedbackResponseDto.builder()
-                .userId(user.getId())
-                .feedback(cachedValue)
-                .build();
-        }
-
-        // 캐시에 없으면 DB 값 사용
-        String dbValue = user.getImprovement();
-        if (dbValue != null && !dbValue.isBlank()) {
-            redisTemplate.opsForValue().set(key, dbValue);
-        }
-
-        return UserFeedbackResponseDto.builder()
-            .userId(user.getId())
-            .feedback(user.getImprovement())
             .build();
     }
 
