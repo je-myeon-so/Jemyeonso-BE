@@ -12,16 +12,20 @@ import java.util.List;
 @Repository
 public interface RankingRepository extends JpaRepository<User, Long> {
 
-    // User 테이블의 totalScore 기준으로 상위 유저 조회
+    // UserDetail 테이블의 totalScore 기준으로 상위 유저 조회
     @Query("SELECT u FROM User u " +
+            "LEFT JOIN FETCH u.userDetail ud " +
             "WHERE u.deletedAt IS NULL " +
-            "AND u.totalScore > 0 " +
-            "ORDER BY u.totalScore DESC")
-    List<User> findTopUsersByTotalScore(Pageable pageable);
+            "AND ud.totalScore IS NOT NULL " +
+            "AND ud.totalScore > 0 " +
+            "ORDER BY ud.totalScore DESC")
+    List<User> findTopUsersByTotalScore();
 
     // 특정 유저의 랭킹 조회
     @Query("SELECT COUNT(u) + 1 FROM User u " +
+            "LEFT JOIN u.userDetail ud " +
+            "LEFT JOIN UserDetail ud2 ON ud2.userId = :userId " +
             "WHERE u.deletedAt IS NULL " +
-            "AND u.totalScore > (SELECT u2.totalScore FROM User u2 WHERE u2.id = :userId)")
+            "AND ud.totalScore > ud2.totalScore")
     Integer findUserRankByTotalScore(@Param("userId") Long userId);
 }
