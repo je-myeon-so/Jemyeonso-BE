@@ -33,6 +33,15 @@ public interface InterviewRepository extends JpaRepository<Interview, Long> {
                                          @Param("startDate") LocalDateTime startDate,
                                          @Param("endDate") LocalDateTime endDate);
 
+    @Query("SELECT i.userId, COALESCE(SUM(i.AvgScore), 0) " +
+            "FROM Interview i " +
+            "WHERE i.createdAt >= :startDate " +
+            "AND i.createdAt <= :endDate " +
+            "AND i.deletedAt IS NULL " +
+            "AND i.AvgScore > 0 " +
+            "GROUP BY i.userId")
+    List<Object[]> calculateAllUsersWeeklyScores(@Param("startDate") LocalDateTime startDate,
+                                                 @Param("endDate") LocalDateTime endDate);
 
 
     // 최신 면접 조회 메서드 추가
