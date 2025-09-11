@@ -22,8 +22,6 @@ public class WeeklyRankingResponseDto {
         private String nickname;
         private String profileImgUrl;
         private Integer totalScore;
-        private Integer interviewCount;
-        private Double averageScore;
         private Integer rank;
     }
 }
