@@ -1,8 +1,5 @@
 package com.jemyeonso.app.jemyeonsobe.api.user.service;
 
-import com.jemyeonso.app.jemyeonsobe.api.auth.repository.AuthRepository;
-import com.jemyeonso.app.jemyeonsobe.api.auth.service.KakaoOauthClient;
-import com.jemyeonso.app.jemyeonsobe.api.document.repository.DocumentRepository;
 import com.jemyeonso.app.jemyeonsobe.api.user.dto.UserFeedbackResponseDto;
 import com.jemyeonso.app.jemyeonsobe.api.user.dto.UserOverviewResponseDto;
 import com.jemyeonso.app.jemyeonsobe.api.user.entity.User;
@@ -12,11 +9,9 @@ import com.jemyeonso.app.jemyeonsobe.api.user.repository.UserRepository;
 import com.jemyeonso.app.jemyeonsobe.api.user.service.ai.AiImproveService;
 import com.jemyeonso.app.jemyeonsobe.common.enums.ErrorMessage;
 import com.jemyeonso.app.jemyeonsobe.common.exception.ResourceNotFoundException;
-import com.jemyeonso.app.jemyeonsobe.util.CookieUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
