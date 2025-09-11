@@ -2,6 +2,8 @@ package com.jemyeonso.app.jemyeonsobe.api.ranking.scheduler;
 
 import com.jemyeonso.app.jemyeonsobe.api.interviews.repository.InterviewRepository;
 import com.jemyeonso.app.jemyeonsobe.api.user.entity.User;
+import com.jemyeonso.app.jemyeonsobe.api.user.entity.UserDetail;
+import com.jemyeonso.app.jemyeonsobe.api.user.repository.UserDetailRepository;
 import com.jemyeonso.app.jemyeonsobe.api.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +21,7 @@ public class WeeklyScoreUpdateScheduler {
 
     private final UserRepository userRepository;
     private final InterviewRepository interviewRepository;
+    private final UserDetailRepository userDetailRepository;
 
     // 1분마다 모든 사용자의 주간 점수 업데이트 (폴링)
     @Scheduled(fixedRate = 60000) // 300초 = 1분
@@ -39,10 +42,17 @@ public class WeeklyScoreUpdateScheduler {
                         user.getId(), weekAgo, now
                 );
 
+                UserDetail userDetail = userDetailRepository.findByUserId(user.getId())
+                        .orElseGet(() -> UserDetail.builder()
+                                .user(user)
+                                .userId(user.getId())
+                                .totalScore(0)
+                                .build());
+
                 // totalScore 업데이트
-                if (!weeklyScore.equals(user.getTotalScore())) {
-                    user.setTotalScore(weeklyScore);
-                    userRepository.save(user);
+                if (!weeklyScore.equals(userDetail.getTotalScore())) {
+                    userDetail.setTotalScore(weeklyScore);
+                    userDetailRepository.save(userDetail);
                     updatedCount++;
                 }
             }
@@ -55,13 +65,24 @@ public class WeeklyScoreUpdateScheduler {
     }
 
     // 매주 월요일 오전 12시에 모든 totalScore 초기화
-    @Scheduled(cron = "0 0 12 * * MON")
+    @Scheduled(cron = "0 0 0 * * MON")
     @Transactional
     public void resetWeeklyScores() {
         log.info("주간 점수 초기화 시작");
 
         try {
-            int updatedCount = userRepository.resetAllTotalScores();
+            // UserDetail의 모든 totalScore를 0으로 초기화
+            List<UserDetail> allUserDetails = userDetailRepository.findAll();
+            int updatedCount = 0;
+
+            for (UserDetail userDetail : allUserDetails) {
+                if (userDetail.getTotalScore() != 0) {
+                    userDetail.setTotalScore(0);
+                    userDetailRepository.save(userDetail);
+                    updatedCount++;
+                }
+            }
+
             log.info("주간 점수 초기화 완료: {} 명의 사용자", updatedCount);
         } catch (Exception e) {
             log.error("주간 점수 초기화 중 오류 발생", e);
