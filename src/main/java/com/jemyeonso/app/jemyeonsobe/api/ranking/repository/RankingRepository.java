@@ -22,10 +22,20 @@ public interface RankingRepository extends JpaRepository<User, Long> {
     List<User> findTopUsersByTotalScore();
 
     // 특정 유저의 랭킹 조회
-    @Query("SELECT COUNT(u) + 1 FROM User u " +
-            "LEFT JOIN u.userDetail ud " +
-            "LEFT JOIN UserDetail ud2 ON ud2.userId = :userId " +
+    @Query("SELECT u FROM User u " +
+            "LEFT JOIN FETCH u.userDetail ud " +
             "WHERE u.deletedAt IS NULL " +
-            "AND ud.totalScore > ud2.totalScore")
+            "AND ud.totalScore IS NOT NULL " +
+            "AND ud.totalScore > 0 " +
+            "ORDER BY ud.totalScore DESC")
+    List<User> findTopUsersByTotalScore(Pageable pageable);
+
+    @Query(value = "SELECT COUNT(*) + 1 " +
+            "FROM user_detail ud1 " +
+            "INNER JOIN user_detail ud2 ON ud2.user_id = :userId " +
+            "INNER JOIN users u ON u.id = ud1.user_id " +
+            "WHERE u.deleted_at IS NULL " +
+            "AND ud1.total_score > ud2.total_score",
+            nativeQuery = true)
     Integer findUserRankByTotalScore(@Param("userId") Long userId);
 }
