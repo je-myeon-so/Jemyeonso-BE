@@ -1,6 +1,7 @@
 package com.jemyeonso.app.jemyeonsobe.api.ranking.repository;
 
 import com.jemyeonso.app.jemyeonsobe.api.user.entity.User;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -28,7 +29,7 @@ public interface RankingRepository extends JpaRepository<User, Long> {
             "AND ud.totalScore IS NOT NULL " +
             "AND ud.totalScore > 0 " +
             "ORDER BY ud.totalScore DESC")
-    List<User> findTopUsersByTotalScore(Pageable pageable);
+    Page<User> findTopUsersByTotalScore(Pageable pageable);
 
     @Query(value = "SELECT COUNT(*) + 1 " +
             "FROM user_detail ud1 " +
