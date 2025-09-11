@@ -12,7 +12,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -33,31 +37,48 @@ public class WeeklyScoreUpdateScheduler {
         LocalDateTime weekAgo = now.minusWeeks(1);
 
         try {
+            List<Object[]> weeklyScores = interviewRepository.calculateAllUsersWeeklyScores(weekAgo, now);
+            Map<Long, Integer> userScoreMap = weeklyScores.stream()
+                    .collect(Collectors.toMap(
+                            row -> (Long) row[0],
+                            row -> ((Number) row[1]).intValue()
+                    ));
+
+            List<UserDetail> allUserDetails = userDetailRepository.findAll();
+            Map<Long, UserDetail> userDetailMap = allUserDetails.stream()
+                    .collect(Collectors.toMap(UserDetail::getUserId, Function.identity()));
+
             List<User> allUsers = userRepository.findByDeletedAtIsNull();
-            int updatedCount = 0;
+
+            List<UserDetail> toUpdate = new ArrayList<>();
+            List<UserDetail> toCreate = new ArrayList<>();
 
             for (User user : allUsers) {
-                // 각 사용자의 주간 점수 계산
-                Integer weeklyScore = interviewRepository.calculateWeeklyScoreByUserId(
-                        user.getId(), weekAgo, now
-                );
+                Integer weeklyScore = userScoreMap.getOrDefault(user.getId(), 0);
+                UserDetail userDetail = userDetailMap.get(user.getId());
 
-                UserDetail userDetail = userDetailRepository.findByUserId(user.getId())
-                        .orElseGet(() -> UserDetail.builder()
-                                .user(user)
-                                .userId(user.getId())
-                                .totalScore(0)
-                                .build());
-
-                // totalScore 업데이트
-                if (!weeklyScore.equals(userDetail.getTotalScore())) {
+                if (userDetail == null) {
+                    userDetail = UserDetail.builder()
+                            .user(user)
+                            .userId(user.getId())
+                            .totalScore(weeklyScore)
+                            .build();
+                    toCreate.add(userDetail);
+                } else if (!weeklyScore.equals(userDetail.getTotalScore())) {
                     userDetail.setTotalScore(weeklyScore);
-                    userDetailRepository.save(userDetail);
-                    updatedCount++;
+                    toUpdate.add(userDetail);
                 }
             }
 
-            log.info("주간 점수 업데이트 완료: {} 명의 사용자 업데이트됨", updatedCount);
+            if (!toCreate.isEmpty()) {
+                userDetailRepository.saveAll(toCreate);
+            }
+            if (!toUpdate.isEmpty()) {
+                userDetailRepository.saveAll(toUpdate);
+            }
+
+            log.info("주간 점수 업데이트 완료: {} 명 생성, {} 명 업데이트",
+                    toCreate.size(), toUpdate.size());
 
         } catch (Exception e) {
             log.error("주간 점수 업데이트 중 오류 발생", e);
@@ -71,18 +92,7 @@ public class WeeklyScoreUpdateScheduler {
         log.info("주간 점수 초기화 시작");
 
         try {
-            // UserDetail의 모든 totalScore를 0으로 초기화
-            List<UserDetail> allUserDetails = userDetailRepository.findAll();
-            int updatedCount = 0;
-
-            for (UserDetail userDetail : allUserDetails) {
-                if (userDetail.getTotalScore() != 0) {
-                    userDetail.setTotalScore(0);
-                    userDetailRepository.save(userDetail);
-                    updatedCount++;
-                }
-            }
-
+            int updatedCount = userDetailRepository.resetAllTotalScores();
             log.info("주간 점수 초기화 완료: {} 명의 사용자", updatedCount);
         } catch (Exception e) {
             log.error("주간 점수 초기화 중 오류 발생", e);
