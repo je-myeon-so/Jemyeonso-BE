@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
@@ -31,7 +32,7 @@ public class UserDetailService {
     private final QaListProvider qaListProvider;
     private final InterviewRepository interviewRepository;
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void refreshImprovementFromAi(Long userId, Long interviewId) {
         // 로깅
         log.info("refreshImprovementFromAi");
