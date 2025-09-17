@@ -50,7 +50,7 @@ public class AiImproveService {
                     "message", "면접 세션 종합 분석이 완료되었습니다.(MOCK)",
                     "data", Map.of(
                         "interviewId", interviewId,
-                        "overallComment", "제발 응답 나와줘! 테스트테으스테스트"
+                        "overallComment", "interview2222222222222"
                     )
                 );
                 String json;
