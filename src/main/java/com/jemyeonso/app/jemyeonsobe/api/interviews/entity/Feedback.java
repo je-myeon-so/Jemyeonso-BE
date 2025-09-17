@@ -33,9 +33,4 @@ public class Feedback {
 
     @Column(name = "error_type", nullable = false, columnDefinition = "TEXT")
     private String errorType;
-
-    // 응답별 점수
-    @Column(name = "score", nullable = false)
-    @ColumnDefault("0")
-    private Integer score;
 }
