@@ -5,6 +5,6 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class ImproveRefreshRequestDto {
-    Long interviewId;
+public class UserOverviewRequestDto {
+    private String overview;
 }

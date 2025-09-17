@@ -29,6 +29,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final CookieUtil cookieUtil;
+    private final TokenBlacklistService tokenBlacklistService; // 블랙리스트 서비스
 
     @Transactional
     public void loginWithKakao(String code, HttpServletResponse response) {
@@ -83,11 +84,11 @@ public class AuthService {
                 // userRepository.save(user);
 
                 Oauth newOauth = Oauth.builder()
-                    .provider("KAKAO")
-                    .providerId(kakaoId)
-                    .user(user)
-                    .refreshToken(null)
-                    .build();
+                        .provider("KAKAO")
+                        .providerId(kakaoId)
+                        .user(user)
+                        .refreshToken(null)
+                        .build();
                 authRepository.save(newOauth);
 
                 issueAndAttachTokens(response, user);
@@ -95,11 +96,11 @@ public class AuthService {
             } else {
                 // OAuth 만 신규 연결
                 Oauth newOauth = Oauth.builder()
-                    .provider("KAKAO")
-                    .providerId(kakaoId)
-                    .user(userByEmailAny.get())
-                    .refreshToken(null)
-                    .build();
+                        .provider("KAKAO")
+                        .providerId(kakaoId)
+                        .user(userByEmailAny.get())
+                        .refreshToken(null)
+                        .build();
                 authRepository.save(newOauth);
 
                 issueAndAttachTokens(response, userByEmailAny.get());
@@ -109,20 +110,20 @@ public class AuthService {
 
         // 3) 신규 가입
         User newUser = User.builder()
-            .nickname(name)
-            .name(name)
-            .email(email)
-            .profileImgUrl(profileImageUrl)
-            .createdAt(LocalDateTime.now())
-            .build();
+                .nickname(name)
+                .name(name)
+                .email(email)
+                .profileImgUrl(profileImageUrl)
+                .createdAt(LocalDateTime.now())
+                .build();
         userRepository.save(newUser);
 
         Oauth newOauth = Oauth.builder()
-            .provider("KAKAO")
-            .providerId(kakaoId)
-            .user(newUser)
-            .refreshToken(null)
-            .build();
+                .provider("KAKAO")
+                .providerId(kakaoId)
+                .user(newUser)
+                .refreshToken(null)
+                .build();
         authRepository.save(newOauth);
 
         issueAndAttachTokens(response, newUser);
@@ -133,7 +134,7 @@ public class AuthService {
             String refreshToken = jwtTokenProvider.createRefreshToken(user);
             String accessToken = jwtTokenProvider.createAccessToken(user);
 
-            authRepository.updateRefreshToken(user.getId(), refreshToken); // 저장 정책에 맞게
+            authRepository.updateRefreshToken(user.getId(), refreshToken);
             addTokenCookies(response, accessToken, refreshToken);
         } catch (Exception e) {
             log.error("토큰 발급/저장 실패", e);
@@ -148,7 +149,8 @@ public class AuthService {
      * @return
      */
     public void logout(HttpServletRequest request, HttpServletResponse response) {
-        String accessToken = extractTokenFromCookies(request);
+        String accessToken = extractAccessTokenFromCookies(request);
+        String refreshToken = extractRefreshTokenFromCookies(request);
 
         try {
             if (accessToken == null) {
@@ -161,13 +163,24 @@ public class AuthService {
 
             Long userId = jwtTokenProvider.getUserIdFromToken(accessToken);
 
-            // DB에서 RefreshToken null 처리
+            // 1. 토큰들을 블랙리스트에 추가
+            if (accessToken != null) {
+                long accessTokenTTL = jwtTokenProvider.getRemainingExpiration(accessToken);
+                tokenBlacklistService.blacklistAccessToken(accessToken, accessTokenTTL);
+            }
+
+            if (refreshToken != null) {
+                long refreshTokenTTL = jwtTokenProvider.getRemainingExpiration(refreshToken);
+                tokenBlacklistService.blacklistRefreshToken(refreshToken, refreshTokenTTL);
+            }
+
+            // 2. DB에서 RefreshToken null 처리
             authRepository.findByUserId(userId).ifPresent(oAuth -> {
                 oAuth.setRefreshToken(null);
                 authRepository.save(oAuth);
             });
 
-            // 쿠키 제거
+            // 3. 쿠키 제거
             cookieUtil.invalidateCookie(response, "access_token");
             cookieUtil.invalidateCookie(response, "refresh_token");
 
@@ -177,47 +190,41 @@ public class AuthService {
     }
 
     /**
-     * 리프레시 토큰을 기반으로 한 토큰 재발급
-     * @param request
-     * @param response
+     * 리프레시 토큰을 기반으로 한 토큰 재발급 - 기존 프로젝트 방식 적용
      */
     public void refreshAccessToken(HttpServletRequest request, HttpServletResponse response) {
-        String refreshToken = extractTokenFromCookies(request);
+        String refreshToken = extractRefreshTokenFromCookies(request);
 
         if (!jwtTokenProvider.isValidToken(refreshToken)) {
-            throw new UnauthorizedException(ErrorMessage.INVALID_ACCESS_TOKEN);
+            throw new UnauthorizedException(ErrorMessage.INVALID_REFRESH_TOKEN);
         }
 
         Long userId = jwtTokenProvider.getUserIdFromToken(refreshToken);
 
-        System.out.println("userId: " + userId);
-
         Optional<Oauth> oauthOpt = Optional.ofNullable(authRepository.findByUserId(userId)
-            .orElseThrow(() -> new UnauthorizedException(ErrorMessage.OAUTH_NOT_FOUND)));
+                .orElseThrow(() -> new UnauthorizedException(ErrorMessage.OAUTH_NOT_FOUND)));
 
         User user = oauthOpt.get().getUser();
 
+        // 기존 토큰들을 블랙리스트에 추가 (기존 프로젝트 방식)
+        String oldAccessToken = extractAccessTokenFromCookies(request);
+        if (oldAccessToken != null) {
+            long accessTokenTTL = jwtTokenProvider.getRemainingExpiration(oldAccessToken);
+            tokenBlacklistService.blacklistAccessToken(oldAccessToken, accessTokenTTL);
+        }
+
+        long refreshTokenTTL = jwtTokenProvider.getRemainingExpiration(refreshToken);
+        tokenBlacklistService.blacklistRefreshToken(refreshToken, refreshTokenTTL);
+
+        // 새 토큰 발급
         String newAccessToken = jwtTokenProvider.createAccessToken(user);
         String newRefreshToken = jwtTokenProvider.createRefreshToken(user);
 
         // DB에 새 refreshToken 저장
         authRepository.updateRefreshToken(user.getId(), newRefreshToken);
 
-        // accessToken 쿠키로 전달
-        Cookie accessCookie = new Cookie("access_token", newAccessToken);
-        accessCookie.setHttpOnly(true);
-        accessCookie.setSecure(true);
-        accessCookie.setPath("/");
-        accessCookie.setMaxAge(30 * 60);
-        response.addCookie(accessCookie);
-
-        // RefreshToken 쿠키로 전달
-        Cookie refreshCookie = new Cookie("refresh_token", newRefreshToken);
-        refreshCookie.setHttpOnly(true);
-        refreshCookie.setSecure(true);
-        refreshCookie.setPath("/");
-        refreshCookie.setMaxAge(7 * 24 * 60 * 60);
-        response.addCookie(refreshCookie);
+        // 새 토큰을 쿠키로 전달
+        addTokenCookies(response, newAccessToken, newRefreshToken);
     }
 
     private void addTokenCookies(HttpServletResponse response, String accessToken, String refreshToken) {
@@ -237,16 +244,25 @@ public class AuthService {
     }
 
     /**
-     * 쿠키에서 토큰 추출
-     * @param request
-     * @return
+     * 쿠키에서 access token 추출
      */
-    private String extractTokenFromCookies(HttpServletRequest request) {
+    private String extractAccessTokenFromCookies(HttpServletRequest request) {
         if (request.getCookies() == null) return null;
         for (Cookie cookie : request.getCookies()) {
             if ("access_token".equals(cookie.getName())) {
                 return cookie.getValue();
-            } else if ("refresh_token".equals(cookie.getName())) {
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 쿠키에서 refresh token 추출
+     */
+    private String extractRefreshTokenFromCookies(HttpServletRequest request) {
+        if (request.getCookies() == null) return null;
+        for (Cookie cookie : request.getCookies()) {
+            if ("refresh_token".equals(cookie.getName())) {
                 return cookie.getValue();
             }
         }

@@ -1,29 +1,28 @@
 package com.jemyeonso.app.jemyeonsobe.api.ranking.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 
 import java.util.List;
 
-@Getter
 @Builder
-@AllArgsConstructor
+@Data
 public class WeeklyRankingResponseDto {
     private List<UserRankingDto> rankings;
     private int totalUsers;
+    private int currentPage;
+    private int totalPages;
+    private boolean hasNext;
+    private boolean hasPrevious;
 
-    @Getter
     @Builder
-    @AllArgsConstructor
+    @Data
     public static class UserRankingDto {
         private Long userId;
         private String name;
         private String nickname;
         private String profileImgUrl;
         private Integer totalScore;
-        private Integer interviewCount;
-        private Double averageScore;
         private Integer rank;
     }
 }

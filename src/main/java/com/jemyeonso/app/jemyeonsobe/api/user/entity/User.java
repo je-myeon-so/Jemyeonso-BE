@@ -17,7 +17,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.DynamicInsert;
 
 @Entity
@@ -47,18 +46,6 @@ public class User {
     @Column(name = "profile_img_url")
     private String profileImgUrl;
 
-    // 개선점
-    @Column(name = "improvement", length = 512)
-    private String improvement;
-
-    // 한마디
-    @Column(name = "comment", length = 100)
-    private String comment;
-
-    @Column(name = "total_score", nullable = false)
-    @ColumnDefault("0")
-    private Integer totalScore;
-
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -70,4 +57,7 @@ public class User {
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Oauth oauth;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private UserDetail userDetail;
 }
