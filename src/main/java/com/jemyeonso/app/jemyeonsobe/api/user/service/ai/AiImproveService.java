@@ -3,7 +3,9 @@ package com.jemyeonso.app.jemyeonsobe.api.user.service.ai;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jemyeonso.app.jemyeonsobe.api.user.service.ai.dto.ImproveRequestDto;
+import com.jemyeonso.app.jemyeonsobe.api.user.service.ai.dto.ImproveRequestDto.QaItem;
 import com.jemyeonso.app.jemyeonsobe.api.user.service.ai.dto.ImproveResponseDto;
+import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,17 +33,16 @@ public class AiImproveService {
     @Value("${ai.mock.enabled:false}")
     boolean mockEnabled;
 
-    public String fetchOverallComment(Long interviewId, Long documentId, String jobType) {
+    public String fetchOverallComment(Long interviewId, String jobType, List<QaItem> qaList) {
         ImproveRequestDto req = ImproveRequestDto.builder()
             .interviewId(interviewId)
-            .documentId(documentId)
             .jobType(jobType)
+            .qaList(qaList)         // documentID말고 질문-답변 리스트 AI한테 전송
             .build();
 
-
-        // mock 모드
         if (mockEnabled) {
-            log.warn("local환경: 목 응답으로 대체");
+            log.warn("local환경: 목 응답으로 대체 (qaList size={})",
+                qaList == null ? 0 : qaList.size());
 
             ExchangeFunction mockEx = clientRequest -> {
                 Map<String, Object> body = Map.of(
@@ -49,7 +50,7 @@ public class AiImproveService {
                     "message", "면접 세션 종합 분석이 완료되었습니다.(MOCK)",
                     "data", Map.of(
                         "interviewId", interviewId,
-                        "overallComment", "테스트테스트) 답변 구조가 명확하고, 핵심을 먼저 제시했습니다."
+                        "overallComment", "interview2222222222222"
                     )
                 );
                 String json;
@@ -73,6 +74,7 @@ public class AiImproveService {
 
             ImproveResponseDto res = mockClient.post()
                 .uri("/api/ai/improve")
+                .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(req)
                 .retrieve()
                 .bodyToMono(ImproveResponseDto.class)
@@ -87,6 +89,7 @@ public class AiImproveService {
         // 실서버 호출
         ImproveResponseDto res = aiWebClient.post()
             .uri("/api/ai/improve")
+            .contentType(MediaType.APPLICATION_JSON)
             .bodyValue(req)
             .retrieve()
             .bodyToMono(ImproveResponseDto.class)

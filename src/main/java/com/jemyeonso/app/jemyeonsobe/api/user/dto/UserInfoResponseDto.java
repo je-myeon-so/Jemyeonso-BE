@@ -11,5 +11,4 @@ public class UserInfoResponseDto {
     private String name;
     private String nickname;
     private String email;
-    private String comment;
 }

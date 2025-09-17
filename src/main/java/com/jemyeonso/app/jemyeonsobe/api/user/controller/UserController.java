@@ -1,7 +1,5 @@
 package com.jemyeonso.app.jemyeonsobe.api.user.controller;
 
-import com.jemyeonso.app.jemyeonsobe.api.user.dto.ImproveRefreshRequestDto;
-import com.jemyeonso.app.jemyeonsobe.api.user.dto.UserFeedbackResponseDto;
 import com.jemyeonso.app.jemyeonsobe.api.user.dto.UserInfoRequestDto;
 import com.jemyeonso.app.jemyeonsobe.api.user.dto.UserInfoResponseDto;
 import com.jemyeonso.app.jemyeonsobe.api.user.service.UserService;
@@ -17,7 +15,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -50,38 +47,21 @@ public class UserController {
      * @return 성공응답
      */
     @PatchMapping("/me")
-    @Operation(summary = "유저 정보 수정", description = "현재 로그인한 사용자의 닉네임, 프로필 이미지, 한줄 소개를 수정합니다.")
+    @Operation(summary = "유저 정보 수정", description = "현재 로그인한 사용자의 닉네임, 프로필 이미지를 수정합니다.")
     public ResponseEntity<?> patchUserInfo(
-        @Parameter(description = "수정할 유저 정보 (닉네임, 프로필 이미지, 한줄 소개)")
+        @Parameter(description = "수정할 유저 정보 (닉네임, 프로필 이미지")
         @RequestBody UserInfoRequestDto userInfoRequestDto) {
         Long userId = SecurityUtil.getCurrentUserId();
 
         String nickname = userInfoRequestDto.getNickname();
         String profileImgUrl = userInfoRequestDto.getProfileImgUrl();
-        String comment = userInfoRequestDto.getComment();
 
-        UserInfoResponseDto responseDto = userService.patchUserInfo(userId, nickname, profileImgUrl, comment);
+        UserInfoResponseDto responseDto = userService.patchUserInfo(userId, nickname, profileImgUrl);
 
-        return ResponseEntity.ok(ApiResponse.success(ApiResponseCode.USER_INFO_EDIT_SUCCESS, "유저 정보 수정에 성공하였습니다.", responseDto));
+        return ResponseEntity.ok(ApiResponse.success(ApiResponseCode.USER_INFO_PATCH_SUCCESS, "유저 정보 수정에 성공하였습니다.", responseDto));
     }
 
-    @PostMapping("/me/improvement/refresh")
-    public ResponseEntity<?> refreshImprovement(@RequestBody ImproveRefreshRequestDto requestDto) {
-        Long userId = SecurityUtil.getCurrentUserId();
-        userService.refreshImprovementFromAi(userId, requestDto.getInterviewId(), requestDto.getDocumentId(), requestDto.getJobType());
 
-        return ResponseEntity.ok(ApiResponse.success(ApiResponseCode.USER_IMPROVEMENT_REFRESH_SUCCESS, "개선점 갱신에 성공하였습니다.", null));
-    }
-
-    @GetMapping("/me/improvement")
-    @Operation(summary = "유저 개선점 조회", description = "현재 로그인한 사용자의 개선점을 조회합니다.")
-    public ResponseEntity<?> getImprovement() {
-        Long userId = SecurityUtil.getCurrentUserId();
-
-        UserFeedbackResponseDto responseDto = userService.getImprovement(userId);
-
-        return ResponseEntity.ok(ApiResponse.success(ApiResponseCode.USER_IMPROVEMENT_GET_SUCCESS, "개선점 조회에 성공하였습니다.", responseDto));
-    }
 
     @DeleteMapping("/me")
     @Operation(summary = "회원 탈퇴", description = "현재 로그인한 사용자의 탈퇴")

@@ -27,16 +27,18 @@ public class RankingController {
             description = "전체 유저의 최근 일주일간 면접 점수를 내림차순으로 조회합니다."
     )
     public ResponseEntity<?> getWeeklyRanking(
-            @Parameter(description = "조회할 상위 순위 수 (기본값: 100, 최대: 1000)")
-            @RequestParam(defaultValue = "100") int limit) {
+            @Parameter(description = "페이지 번호 (0부터 시작, 기본값: 0)")
+            @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기 (기본값: 10, 최대: 100)")
+            @RequestParam(defaultValue = "10") int size) {
 
-        if (limit < 1 || limit > 1000) {
+        if (page < 0 || size < 1 || size > 100) {
             return ResponseEntity.badRequest()
                     .body(ApiResponse.error(ApiResponseCode.PAGINATION_INVALID_PARAMETER));
         }
 
         try {
-            WeeklyRankingResponseDto response = rankingService.getWeeklyRanking(limit);
+            WeeklyRankingResponseDto response = rankingService.getWeeklyRanking(page, size);
             return ResponseEntity.ok(
                     ApiResponse.success(
                             ApiResponseCode.WEEKLY_RANKING_GET_SUCCESS,

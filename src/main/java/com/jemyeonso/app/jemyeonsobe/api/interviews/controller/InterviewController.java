@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -148,5 +149,15 @@ public class InterviewController {
         return ResponseEntity.ok(
                 ApiResponse.success(ApiResponseCode.QUESTION_DETAIL_GET_SUCCESS, responseDto)
         );
+    }
+
+    @Operation(summary = "면접 종료", description = "면접 종료를 하며 개선점을 갱신합니다. ")
+    @PostMapping("/{interviewId}/finish")
+    public ResponseEntity<?> finishInterview(@PathVariable Long interviewId) {
+        Long userId = SecurityUtil.getCurrentUserId();
+        interviewService.finishInterview(userId, interviewId);
+
+        // 204 응답
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }
