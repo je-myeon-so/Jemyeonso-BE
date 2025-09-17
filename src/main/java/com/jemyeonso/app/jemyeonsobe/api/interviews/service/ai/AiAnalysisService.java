@@ -3,6 +3,7 @@ package com.jemyeonso.app.jemyeonsobe.api.interviews.service.ai;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.entity.Answer;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.entity.Feedback;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.entity.Interview;
+import com.jemyeonso.app.jemyeonsobe.api.interviews.repository.AnswerRepository;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.repository.FeedbackRepository;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.service.ai.dto.AiAnswerAnalyzeRequestDto;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.service.ai.dto.AiAnswerAnalyzeResponseDto;
@@ -25,6 +26,7 @@ public class AiAnalysisService {
     private final WebClient aiWebClient;
 
     private final FeedbackRepository feedbackRepository;
+    private final AnswerRepository answerRepository;
 
     @Async
     public void analyzeAnswerAsync(Answer answer, Interview interview, String previousQuestion) {
@@ -42,6 +44,14 @@ public class AiAnalysisService {
             .retrieve()
             .bodyToMono(AiAnswerAnalyzeResponseDto.class)
             .doOnNext(response -> {
+                // 답변 점수 저장
+                Integer score = response.getData().getScore();
+                if (score != null) {
+                    answer.setScore(score);
+                    answerRepository.save(answer);
+                }
+
+                // 답변 피드백 저장
                 List<Analysis> analysisList = response.getData().getAnalysis();
                 for (AiAnswerAnalyzeResponseDto.Analysis analysis : analysisList) {
                     Feedback feedback = Feedback.builder()
