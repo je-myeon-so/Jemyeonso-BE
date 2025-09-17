@@ -1,7 +1,6 @@
 package com.jemyeonso.app.jemyeonsobe.api.interviews.controller;
 
 import com.jemyeonso.app.jemyeonsobe.api.interviews.dto.*;
-import com.jemyeonso.app.jemyeonsobe.api.interviews.repository.QuestionRepository;
 import com.jemyeonso.app.jemyeonsobe.common.enums.ApiResponse;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.service.InterviewService;
 import com.jemyeonso.app.jemyeonsobe.common.enums.ApiResponseCode;
@@ -25,7 +24,6 @@ import org.springframework.web.bind.annotation.*;
 public class InterviewController {
 
     private final InterviewService interviewService;
-    private final QuestionRepository questionRepository;
 
     @Operation(
             summary = "면접 세션 생성",

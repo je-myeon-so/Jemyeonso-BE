@@ -14,7 +14,6 @@ import com.jemyeonso.app.jemyeonsobe.api.interviews.service.ai.AiQuestionService
 import com.jemyeonso.app.jemyeonsobe.api.user.entity.UserDetail;
 import com.jemyeonso.app.jemyeonsobe.api.user.repository.UserDetailRepository;
 import com.jemyeonso.app.jemyeonsobe.api.user.service.UserDetailService;
-import com.jemyeonso.app.jemyeonsobe.api.user.service.UserService;
 import com.jemyeonso.app.jemyeonsobe.common.enums.ErrorMessage;
 import com.jemyeonso.app.jemyeonsobe.common.exception.ResourceNotFoundException;
 import com.jemyeonso.app.jemyeonsobe.common.exception.InterviewAccessDeniedException;

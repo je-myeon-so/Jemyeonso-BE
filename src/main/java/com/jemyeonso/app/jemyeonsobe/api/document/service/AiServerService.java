@@ -16,6 +16,7 @@ public class AiServerService {
     @Qualifier("aiWebClient")
     private final WebClient aiWebClient;
 
+    @SuppressWarnings("LoggingSimilarMessage")
     @Async
     public void sendDocumentToAiServer(String fileUrl, Long userId, Long documentId, String fileType) {
         try {
