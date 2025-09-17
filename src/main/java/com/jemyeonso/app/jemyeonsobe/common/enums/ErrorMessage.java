@@ -24,7 +24,8 @@ public enum ErrorMessage {
     USER_NOT_FOUND("존재하지 않는 사용자입니다."),
     USER_DETAIL_NOT_FOUND("유저 디테일이 존재하지 않습니다."),
     QUESTION_NOT_FOUND("존재하지 않는 질문입니다."),
-    INTERVIEW_NOT_FOUND("존재하지 않는 인터뷰입니다.");
+    INTERVIEW_NOT_FOUND("존재하지 않는 인터뷰입니다."),
+    INTERVIEW_QA_NOT_FOUND("인터뷰에 질문 리스트가 존재하지 않습니다.");
 
     private final String message;
 

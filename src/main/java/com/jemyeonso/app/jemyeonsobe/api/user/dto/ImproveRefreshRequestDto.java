@@ -7,6 +7,4 @@ import lombok.Getter;
 @Builder
 public class ImproveRefreshRequestDto {
     Long interviewId;
-    Long documentId;
-    String jobType;
 }

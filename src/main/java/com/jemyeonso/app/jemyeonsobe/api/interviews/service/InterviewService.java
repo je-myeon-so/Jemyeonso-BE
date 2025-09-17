@@ -41,7 +41,6 @@ public class InterviewService {
     private final AiQuestionService aiQuestionService;
     private final AiAnalysisService aiAnalysisService;
     private final AnswerRepository answerRepository;
-    private final UserService userService;
     private final RedisTemplate<String, String> redisTemplate;
     private final UserDetailService userDetailService;
 
@@ -61,7 +60,7 @@ public class InterviewService {
     @Async("improvementExecutor")
     public void refreshImprovementAsync(Long userId, Long interviewId, Long documentId, String jobType) {
         try {
-            userDetailService.refreshImprovementFromAi(userId, interviewId, documentId, jobType);
+            userDetailService.refreshImprovementFromAi(userId, interviewId);
         } catch (Exception e) {
             org.slf4j.LoggerFactory.getLogger(getClass())
                 .warn("improvement refresh failed: userId={}, interviewId={}, err={}",
