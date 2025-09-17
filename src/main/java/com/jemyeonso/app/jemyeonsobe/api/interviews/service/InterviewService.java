@@ -11,6 +11,8 @@ import com.jemyeonso.app.jemyeonsobe.api.interviews.service.ai.AiAnalysisService
 import com.jemyeonso.app.jemyeonsobe.api.interviews.service.ai.dto.AiQuestionRequestDto;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.service.ai.dto.AiQuestionResponseDto;
 import com.jemyeonso.app.jemyeonsobe.api.interviews.service.ai.AiQuestionService;
+import com.jemyeonso.app.jemyeonsobe.api.user.entity.UserDetail;
+import com.jemyeonso.app.jemyeonsobe.api.user.repository.UserDetailRepository;
 import com.jemyeonso.app.jemyeonsobe.api.user.service.UserDetailService;
 import com.jemyeonso.app.jemyeonsobe.api.user.service.UserService;
 import com.jemyeonso.app.jemyeonsobe.common.enums.ErrorMessage;
@@ -44,6 +46,7 @@ public class InterviewService {
     private final AnswerRepository answerRepository;
     private final RedisTemplate<String, String> redisTemplate;
     private final UserDetailService userDetailService;
+    private final UserDetailRepository userDetailRepository;
 
     private String ptrKey(Long userId) {
         return "user:" + userId + ":improvement:latest:interviewId";
@@ -79,33 +82,11 @@ public class InterviewService {
             throw new InterviewAccessDeniedException(ErrorMessage.NO_INTERVIEW_PERMISSION);
         }
 
-        // 중복 트리거 방지: 최신 포인터 확인 + 락 시도
-        String ptr = redisTemplate.opsForValue().get(ptrKey(userId));
-        boolean need = (ptr == null || !ptr.equals(String.valueOf(interviewId)));
-        String lock = lockKey(userId, interviewId);
+        // 인터뷰 평균 저장
+        triggerImprovementAfterCommit(userId, interviewId);
 
-        if (!need) {
-            // 이미 해당 인터뷰로 갱신된거면 그냥 리턴
-            return;
-        }
-
-        // 커밋 이후 비동기로 갱신 실행
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                if (tryLock(lock, Duration.ofMinutes(10))) {
-                    try {
-                        // 비동기 실행
-                        refreshImprovementAsync(userId, interviewId, null, null);
-                    } catch (Exception e) {
-                        org.slf4j.LoggerFactory.getLogger(getClass())
-                            .warn("finishInterview: async refresh failed userId={}, interviewId={}, err={}",
-                                userId, interviewId, e.toString());
-                    }
-                }
-            }
-        });
-
+        // 개선점 갱신
+        saveInterviewAvgAndAccumulateUserTotal(userId, interviewId);
 
     }
 
@@ -332,5 +313,80 @@ public class InterviewService {
                 .createdAt(question.getCreatedAt())
                 .answer(answerDetail)
                 .build();
+    }
+
+    /**
+     * 인터뷰 평균 저장, 윺저 디테일의 tatal_score에 누적
+     * @param userId
+     * @param interviewId
+     */
+    @Transactional
+    public void saveInterviewAvgAndAccumulateUserTotal(Long userId, Long interviewId) {
+        // 인터뷰 가져오기 & 권한 확인
+        Interview interview = interviewRepository.findById(interviewId)
+            .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.INTERVIEW_NOT_FOUND));
+
+        if (!interview.getUserId().equals(userId)) {
+            throw new InterviewAccessDeniedException(ErrorMessage.NO_INTERVIEW_PERMISSION);
+        }
+
+
+//        List<Answer> answers = answerRepository.findAllByInterviewId(interviewId);
+//
+//        System.out.println("interviewId: " + interviewId + "에 들어있는 답변 id들");
+//        for (Answer answer : answers) {
+//            System.out.println("answerId = " + answer.getId());
+//            System.out.println("answerScore = " + answer.getScore());
+//        }
+//        System.out.println("interviewId: " + interviewId + "에 들어있는 답변 id들 끝");
+
+        // Answer.score 평균 계산
+        Double avg = answerRepository.findAverageScoreByInterviewId(interviewId);
+        int rounded = (avg == null) ? 0 : (int) Math.round(avg);
+
+        // 인터뷰에 avg_score 저장
+        interview.setAvgScore(rounded);
+        interviewRepository.save(interview);
+
+        // UserDetail.total_score 누적 반영
+        UserDetail userDetail = userDetailRepository.findByUserIdForUpdate(userId)
+            .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.USER_DETAIL_NOT_FOUND));
+
+        int current = userDetail.getTotalScore() == null ? 0 : userDetail.getTotalScore();
+        userDetail.setTotalScore(current + rounded);
+        userDetailRepository.saveAndFlush(userDetail);
+
+        log.info("Interview avg_score 저장 + UserDetail total_score 누적: interviewId={}, userId={}, +{}, total={}",
+            interviewId, userId, rounded, userDetail.getTotalScore());
+    }
+
+    @Transactional
+    public void triggerImprovementAfterCommit(Long userId, Long interviewId) {
+        // 중복 트리거 방지: 최신 포인터 확인 + 락 시도
+        String ptr = redisTemplate.opsForValue().get(ptrKey(userId));
+        boolean need = (ptr == null || !ptr.equals(String.valueOf(interviewId)));
+        String lock = lockKey(userId, interviewId);
+
+        if (!need) {
+            // 이미 해당 인터뷰로 갱신된거면 그냥 리턴
+            return;
+        }
+
+        // 커밋 이후 비동기로 갱신 실행
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                if (tryLock(lock, Duration.ofMinutes(10))) {
+                    try {
+                        // 비동기 실행
+                        refreshImprovementAsync(userId, interviewId, null, null);
+                    } catch (Exception e) {
+                        org.slf4j.LoggerFactory.getLogger(getClass())
+                            .warn("finishInterview: 비동기 갱신 실패 userId={}, interviewId={}, err={}",
+                                userId, interviewId, e.toString());
+                    }
+                }
+            }
+        });
     }
 }
