@@ -75,6 +75,6 @@ public class Interview {
     }
 
     public enum QuestionLevel {
-        상, 중, 하
+        High, Medium, Low
     }
 }

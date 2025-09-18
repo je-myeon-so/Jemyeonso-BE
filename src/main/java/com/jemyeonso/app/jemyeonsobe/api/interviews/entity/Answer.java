@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.hibernate.annotations.ColumnDefault;
 
 @Entity
 @Table(name = "answer")
@@ -27,6 +28,10 @@ public class Answer {
 
     @Column(name = "answer_time")
     private String answerTime;
+
+    @Column(name = "score", nullable = false)
+    @ColumnDefault("0")
+    private Integer score;
 
     // Feedback과의 연관관계
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)

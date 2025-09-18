@@ -17,12 +17,13 @@ public class AiAnswerAnalyzeResponseDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Data {
+        private Integer score;
         private List<Analysis> analysis;
     }
 
     @Getter
     @NoArgsConstructor
-
+    @AllArgsConstructor
     public static class Analysis {
         private String errorText;
         private String errorType;

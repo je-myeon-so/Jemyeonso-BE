@@ -33,10 +33,10 @@ public interface RankingRepository extends JpaRepository<User, Long> {
 
     @Query(value = "SELECT COUNT(*) + 1 " +
             "FROM user_detail ud1 " +
-            "INNER JOIN user_detail ud2 ON ud2.user_id = :userId " +
-            "INNER JOIN users u ON u.id = ud1.user_id " +
-            "WHERE u.deleted_at IS NULL " +
-            "AND ud1.total_score > ud2.total_score",
-            nativeQuery = true)
+            "INNER JOIN user_detail ud2 ON ud2.id = :userId " +
+            "INNER JOIN users u ON u.id = ud1.id " +
+        "WHERE u.deleted_at IS NULL " +
+                "AND ud1.total_score > ud2.total_score",
+    nativeQuery = true)
     Integer findUserRankByTotalScore(@Param("userId") Long userId);
 }
